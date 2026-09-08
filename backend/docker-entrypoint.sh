@@ -104,7 +104,6 @@ echo "  🔑 Akun Demo Siap Pakai (Password: password):"
 echo "     - Super Admin : superadmin@photobooth.test"
 echo "     - Tenant Admin: tenant@photobooth.test"
 echo "     - Operator    : operator@photobooth.test"
-echo "     - Management  : management@photobooth.test"
 echo "══════════════════════════════════════════════════════════"
 echo ""
 

@@ -179,22 +179,6 @@ Menggunakan photobooth dan mendapatkan hasil foto.
 
 ---
 
-## 5.5 Management
-
-**Tujuan:**
-Melihat performa bisnis.
-
-**Kebutuhan:**
-- Dashboard.
-- Revenue.
-- Event.
-- Session.
-- Customer.
-- Statistik penggunaan.
-- Laporan.
-
----
-
 # 6. Product Scope
 
 ## 6.1 Platform
@@ -252,23 +236,23 @@ Melihat performa bisnis.
 
 # 7. Role & Permission Matrix
 
-| Modul | Super Admin | Tenant Admin | Operator | Customer | Management |
-|---|---:|---:|---:|---:|---:|
-| Platform Dashboard | CRUD/View | - | - | - | - |
-| Tenant Management | CRUD | - | - | - | - |
-| Subscription Plan | CRUD | View/Select | - | - | View |
-| Business Profile | View | CRUD | - | - | - |
-| User Management | CRUD | CRUD | - | - | View |
-| Package | View | CRUD | - | View | View |
-| Event | View | CRUD | View | - | View |
-| Template | View | CRUD | View | Select | View |
-| On-Site Photobooth | - | View | Use | Use | - |
-| Online Photobooth | - | View | - | Use | - |
-| Photo Session | View | CRUD/View | Create/View | Create/View | View |
-| Gallery | View | CRUD/View | View | View own result | View |
-| Transaction | View | CRUD/View | View | View own | View |
-| Reports | View | View | Limited | - | View |
-| System Settings | CRUD | CRUD tenant | - | - | - |
+| Modul | Super Admin | Tenant Admin | Operator | Customer |
+|---|---:|---:|---:|---:|
+| Platform Dashboard | CRUD/View | - | - | - |
+| Tenant Management | CRUD | - | - | - |
+| Subscription Plan | CRUD | View/Select | - | - |
+| Business Profile | View | CRUD | - | - |
+| User Management | CRUD | CRUD | - | - |
+| Package | View | CRUD | - | View |
+| Event | View | CRUD | View | - |
+| Template | View | CRUD | View | Select |
+| On-Site Photobooth | - | View | Use | Use |
+| Online Photobooth | - | View | - | Use |
+| Photo Session | View | CRUD/View | Create/View | Create/View |
+| Gallery | View | CRUD/View | View | View own result |
+| Transaction | View | CRUD/View | View | View own |
+| Reports | View | View | Limited | - |
+| System Settings | CRUD | CRUD tenant | - | - |
 
 ---
 
@@ -960,17 +944,6 @@ Menampilkan:
 - Active package.
 - Subscription status.
 - Quota usage.
-
-## Management Dashboard
-
-Menampilkan:
-
-- Revenue.
-- Event.
-- Session.
-- Customer.
-- Usage.
-- Periodic statistics.
 
 ---
 

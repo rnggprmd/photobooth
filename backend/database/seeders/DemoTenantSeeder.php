@@ -89,17 +89,6 @@ class DemoTenantSeeder extends Seeder
         );
         $operator->assignRole('operator');
 
-        $management = User::updateOrCreate(
-            ['email' => 'management@photobooth.test'],
-            [
-                'tenant_id' => $tenant->id,
-                'name'      => 'Siti Management',
-                'password'  => Hash::make('password'),
-                'status'    => 'active',
-            ]
-        );
-        $management->assignRole('management');
-
         // 5. Packages
         $pkgWedding = Package::updateOrCreate(
             ['tenant_id' => $tenant->id, 'name' => 'Wedding Glamour (On-Site)'],
@@ -356,6 +345,5 @@ class DemoTenantSeeder extends Seeder
         $this->command->info('Demo tenant seeded: Lumina Photobooth Studio');
         $this->command->info('  - Tenant Admin: tenant@photobooth.test / password');
         $this->command->info('  - Operator:     operator@photobooth.test / password');
-        $this->command->info('  - Management:   management@photobooth.test / password');
     }
 }

@@ -1,6 +1,4 @@
-// TypeScript Types based on ERD & BRD/PRD Photobooth SaaS
-
-export type RoleName = 'super_admin' | 'tenant_admin' | 'operator' | 'customer' | 'management';
+export type RoleName = 'super_admin' | 'tenant_admin' | 'operator' | 'customer';
 
 export type TenantStatus = 'active' | 'suspended' | 'expired';
 export type UserStatus = 'active' | 'inactive';

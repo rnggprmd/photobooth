@@ -47,7 +47,7 @@ class UserController extends Controller
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|min:6',
             'phone'    => 'nullable|string|max:30',
-            'role'     => 'nullable|in:operator,management,tenant_admin',
+            'role'     => 'nullable|in:operator,tenant_admin',
         ]);
 
         $tenantId = auth()->user()->tenant_id;

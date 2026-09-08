@@ -70,9 +70,6 @@ Menjalankan photobooth on-site dan event yang ditugaskan.
 ### 6.4 Customer
 Menggunakan photobooth, mengambil foto, memilih template, dan memperoleh hasil.
 
-### 6.5 Management
-Melihat dashboard, transaksi, statistik, dan laporan bisnis.
-
 ## 7. Model SaaS
 
 Setiap bisnis yang mendaftar memiliki tenant sendiri.
@@ -310,23 +307,23 @@ Choose Plan → Checkout → Payment → Subscription Active → Usage Tracking 
 
 ## 13. Role & Access
 
-| Fitur | Super Admin | Tenant Admin | Operator | Customer | Management |
-|---|---:|---:|---:|---:|---:|
-| Platform Dashboard | ✓ | - | - | - | - |
-| Tenant Management | ✓ | - | - | - | - |
-| Subscription | ✓ | ✓ | - | - | View |
-| Business Profile | ✓ | ✓ | - | - | - |
-| User Management | ✓ | ✓ | - | - | - |
-| Package | - | ✓ | - | View | View |
-| Event | - | ✓ | ✓ | - | View |
-| Template | - | ✓ | - | View | View |
-| On-site Photobooth | - | ✓ | ✓ | ✓ | - |
-| Online Photobooth | - | ✓ | - | ✓ | - |
-| Photo Session | View | ✓ | ✓ | ✓ | View |
-| Gallery | View | ✓ | ✓ | ✓ | View |
-| Transaction | ✓ | ✓ | View | View | View |
-| Reports | ✓ | ✓ | Limited | - | ✓ |
-| System Settings | ✓ | ✓ | - | - | - |
+| Fitur | Super Admin | Tenant Admin | Operator | Customer |
+|---|---:|---:|---:|---:|
+| Platform Dashboard | ✓ | - | - | - |
+| Tenant Management | ✓ | - | - | - |
+| Subscription | ✓ | ✓ | - | - |
+| Business Profile | ✓ | ✓ | - | - |
+| User Management | ✓ | ✓ | - | - |
+| Package | - | ✓ | - | View |
+| Event | - | ✓ | ✓ | - |
+| Template | - | ✓ | - | View |
+| On-site Photobooth | - | ✓ | ✓ | ✓ |
+| Online Photobooth | - | ✓ | - | ✓ |
+| Photo Session | View | ✓ | ✓ | ✓ |
+| Gallery | View | ✓ | ✓ | ✓ |
+| Transaction | ✓ | ✓ | View | View |
+| Reports | ✓ | ✓ | Limited | - |
+| System Settings | ✓ | ✓ | - | - |
 
 ## 14. Functional Requirements
 
@@ -449,14 +446,6 @@ Sistem dapat menangani plan selection, checkout, payment, activation, renewal, e
 - Active package
 - Subscription status
 - Usage quota
-
-### Management
-- Revenue
-- Event
-- Session
-- Customer
-- Usage
-- Periodic report
 
 ## 16. Notification
 

@@ -152,20 +152,6 @@ class RolePermissionSeeder extends Seeder
             'notification.view',
         ]);
 
-        // Management
-        $management = Role::firstOrCreate(['name' => 'management', 'guard_name' => 'web']);
-        $management->givePermissionTo([
-            'subscription.plan.view',
-            'package.view',
-            'event.view',
-            'template.view',
-            'session.view',
-            'gallery.view',
-            'transaction.view',
-            'report.view',
-            'notification.view',
-        ]);
-
         // Customer (for authenticated customer actions)
         $customer = Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'web']);
         $customer->givePermissionTo([

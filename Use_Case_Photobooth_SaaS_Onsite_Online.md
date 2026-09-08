@@ -26,7 +26,6 @@
 | Tenant Admin / Business Owner | Mengelola bisnis photobooth milik tenant |
 | Operator | Menjalankan operasional photobooth pada event |
 | Customer | Menggunakan photobooth dan mengambil hasil foto |
-| Management | Melihat dashboard dan laporan bisnis |
 | Payment Gateway | Sistem eksternal untuk proses pembayaran |
 | Storage | Media/file storage untuk desain dan hasil foto |
 | Camera / Browser | Perangkat/service yang menyediakan akses kamera |
@@ -53,8 +52,8 @@
 | UC-014 | Assign Template ke Event | Tenant Admin |
 | UC-015 | Assign Operator ke Event | Tenant Admin |
 | UC-016 | Mengelola Subscription Tenant | Tenant Admin |
-| UC-017 | Melihat Dashboard | Tenant Admin / Management |
-| UC-018 | Melihat Report | Tenant Admin / Management |
+| UC-017 | Melihat Dashboard | Tenant Admin |
+| UC-018 | Melihat Report | Tenant Admin |
 | UC-019 | Memulai Photobooth | Operator / Customer |
 | UC-020 | Mengakses Kamera | Customer |
 | UC-021 | Capture Foto | Customer |
@@ -104,22 +103,22 @@
                     |
           +---------+----------+
           |                    |
- +--------+---------+   +------+-------+
- |   Tenant Admin   |   |  Management  |
- +------------------+   +--------------+
- | Business Profile |
- | Users            |
- | Package          |
- | Event            |
- | Operator         |
- | Template         |
- | Photo Slot       |
- | Subscription     |
- | Gallery          |
- | Transaction      |
- | Dashboard        |
- | Report           |
- +------------------+
+ +--------+---------+          |
+ |   Tenant Admin   |          |
+ +------------------+          |
+ | Business Profile |          |
+ | Users            |          |
+ | Package          |          |
+ | Event            |          |
+ | Operator         |          |
+ | Template         |          |
+ | Photo Slot       |          |
+ | Subscription     |          |
+ | Gallery          |          |
+ | Transaction      |          |
+ | Dashboard        |          |
+ | Report           |          |
+ +------------------+          |
 
  +------------------+       +----------------------+
  |    Operator      |       |      Customer        |
@@ -330,7 +329,6 @@ Role:
 
 - Tenant Admin.
 - Operator.
-- Management.
 
 ---
 
@@ -555,7 +553,7 @@ Cancelled
 
 # 21. UC-017 — Melihat Dashboard
 
-**Aktor:** Tenant Admin / Management
+**Aktor:** Tenant Admin
 
 Dashboard menampilkan:
 
@@ -572,7 +570,7 @@ Dashboard menampilkan:
 
 # 22. UC-018 — Melihat Report
 
-**Aktor:** Tenant Admin / Management
+**Aktor:** Tenant Admin
 
 Report dapat menampilkan:
 
@@ -1104,23 +1102,23 @@ Photobooth Session
 
 # 41. Actor Access Summary
 
-| Modul | Super Admin | Tenant Admin | Operator | Customer | Management |
-|---|---|---|---|---|---|
-| Authentication | ✓ | ✓ | ✓ | Optional | ✓ |
-| Tenant | CRUD | - | - | - | View |
-| Subscription Plan | CRUD | View | - | - | View |
-| Business Profile | - | CRUD | - | - | View |
-| User | - | CRUD | - | - | View |
-| Package | View | CRUD | - | View | View |
-| Event | View | CRUD | View Assigned | - | View |
-| Template | View | CRUD | View | Select | View |
-| Photo Slot | View | CRUD | View | - | View |
-| Photobooth | - | View | Use | Use | - |
-| Session | View | View/Manage | Create/View | Create/View Own | View |
-| Gallery | View | Manage | View | View Own | View |
-| Customer | View | Manage | Limited | Own | View |
-| Transaction | View | Manage | View | Own | View |
-| Report | View | View | Limited | - | View |
+| Modul | Super Admin | Tenant Admin | Operator | Customer |
+|---|---|---|---|---|
+| Authentication | ✓ | ✓ | ✓ | Optional |
+| Tenant | CRUD | - | - | - |
+| Subscription Plan | CRUD | View | - | - |
+| Business Profile | - | CRUD | - | - |
+| User | - | CRUD | - | - |
+| Package | View | CRUD | - | View |
+| Event | View | CRUD | View Assigned | - |
+| Template | View | CRUD | View | Select |
+| Photo Slot | View | CRUD | View | - |
+| Photobooth | - | View | Use | Use |
+| Session | View | View/Manage | Create/View | Create/View Own |
+| Gallery | View | Manage | View | View Own |
+| Customer | View | Manage | Limited | Own |
+| Transaction | View | Manage | View | Own |
+| Report | View | View | Limited | - |
 
 ---
 

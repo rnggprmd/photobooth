@@ -30,16 +30,16 @@ if [ ! -f ".env" ]; then
     fi
 fi
 
-# ── 3. Generate APP_KEY jika belum ada ───────────────────────────
-if grep -qE "^APP_KEY=\s*$" .env || ! grep -q "^APP_KEY=" .env; then
-    echo "🔑 Generating APP_KEY..."
-    php artisan key:generate --force
-fi
-
-# ── 4. Cek & install dependencies jika volume baru kosong ─────────
+# ── 3. Cek & install dependencies jika volume baru kosong ─────────
 if [ ! -f "vendor/autoload.php" ]; then
     echo "📦 vendor/autoload.php not found in volume, installing dependencies..."
     composer install --no-interaction
+fi
+
+# ── 4. Generate APP_KEY jika belum ada ───────────────────────────
+if grep -qE "^APP_KEY=\s*$" .env || ! grep -q "^APP_KEY=" .env; then
+    echo "🔑 Generating APP_KEY..."
+    php artisan key:generate --force
 fi
 
 # ── 5. Tunggu MySQL & Database siap (max 60 detik) ───────────────

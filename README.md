@@ -1,7 +1,7 @@
 # 📸 Photobooth App
 
 Aplikasi Photobooth modern dengan arsitektur terpisah:
-- **Backend**: [Laravel 11](https://laravel.com/) (RESTful API & Sanctum)
+- **Backend**: [Laravel 13](https://laravel.com/) (RESTful API & Sanctum)
 - **Frontend**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) + [Lucide Icons](https://lucide.dev/)
 - **Repository**: [rnggprmd/photobooth](https://github.com/rnggprmd/photobooth.git)
 

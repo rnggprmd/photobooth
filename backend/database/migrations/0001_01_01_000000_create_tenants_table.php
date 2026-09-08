@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
+            $table->unsignedBigInteger('logo_media_id')->nullable();
             $table->string('status')->default('active'); // active, inactive, suspended
             $table->timestamps();
         });

@@ -22,6 +22,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/storage': {
+          target: env.VITE_API_TARGET || 'http://localhost:8000',
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
   };

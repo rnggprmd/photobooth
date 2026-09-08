@@ -82,8 +82,9 @@ php artisan config:clear
 php artisan route:clear
 
 # ── 7. Buat symlink storage ──────────────────────────────────────
-echo "🔗 Creating storage symlink..."
-php artisan storage:link 2>/dev/null || true
+echo "🔗 Refreshing storage symlink..."
+rm -f public/storage 2>/dev/null || true
+php artisan storage:link --force 2>/dev/null || true
 
 # ── 8. Start Laravel dev server ──────────────────────────────────
 echo ""

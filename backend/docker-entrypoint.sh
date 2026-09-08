@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # ─────────────────────────────────────────────────────────────────
 #  docker-entrypoint.sh – Laravel Bootstrap Script
@@ -8,13 +7,21 @@ set -e
 echo "🚀 Starting Photobooth Backend..."
 
 # ── 1. Copy .env jika belum ada ───────────────────────────────────
+# Prioritas: .env.docker (Docker-specific, DB_HOST=db)
+# Fallback  : .env.example (DB_HOST=127.0.0.1, tidak cocok untuk Docker)
 if [ ! -f ".env" ]; then
-    echo "📋 .env not found, copying from .env.example..."
-    cp .env.example .env
+    if [ -f ".env.docker" ]; then
+        echo "📋 .env not found, copying from .env.docker..."
+        cp .env.docker .env
+    else
+        echo "📋 .env not found, copying from .env.example..."
+        cp .env.example .env
+    fi
 fi
 
 # ── 2. Generate APP_KEY jika belum ada ───────────────────────────
-if grep -q "APP_KEY=$" .env; then
+# Regex: APP_KEY= diikuti akhir baris atau whitespace
+if grep -qE "^APP_KEY=\s*$" .env; then
     echo "🔑 Generating APP_KEY..."
     php artisan key:generate --force
 fi
@@ -23,13 +30,18 @@ fi
 echo "⏳ Waiting for MySQL to be ready..."
 MAX_TRIES=30
 TRIES=0
+
 until php -r "
-    \$pdo = new PDO(
-        'mysql:host=' . getenv('DB_HOST') . ';port=' . getenv('DB_PORT'),
-        getenv('DB_USERNAME'),
-        getenv('DB_PASSWORD')
-    );
-    echo 'connected';
+    \$host = getenv('DB_HOST') ?: 'db';
+    \$port = getenv('DB_PORT') ?: '3306';
+    \$user = getenv('DB_USERNAME') ?: 'root';
+    \$pass = (getenv('DB_PASSWORD') !== false) ? getenv('DB_PASSWORD') : '';
+    try {
+        new PDO('mysql:host=' . \$host . ';port=' . \$port, \$user, \$pass);
+        echo 'connected';
+    } catch (Exception \$e) {
+        exit(1);
+    }
 " 2>/dev/null | grep -q "connected"; do
     TRIES=$((TRIES + 1))
     if [ $TRIES -ge $MAX_TRIES ]; then
@@ -44,16 +56,19 @@ echo "✅ MySQL is ready!"
 
 # ── 4. Jalankan migrasi ───────────────────────────────────────────
 echo "🗄️  Running migrations..."
-php artisan migrate --force
+php artisan migrate --force || {
+    echo "❌ Migration failed!"
+    exit 1
+}
 
-# ── 5. Clear & cache config ──────────────────────────────────────
-echo "⚙️  Caching config..."
+# ── 5. Clear config & route ──────────────────────────────────────
+echo "⚙️  Clearing config & route cache..."
 php artisan config:clear
 php artisan route:clear
 
 # ── 6. Buat symlink storage ──────────────────────────────────────
 echo "🔗 Creating storage symlink..."
-php artisan storage:link || true
+php artisan storage:link 2>/dev/null || true
 
 # ── 7. Start Laravel dev server ──────────────────────────────────
 echo ""

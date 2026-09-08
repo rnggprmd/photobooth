@@ -45,6 +45,7 @@ services:
     environment:
       APP_NAME: Photobooth_Backend
       APP_ENV: local
+      APP_KEY: ""
       APP_DEBUG: "true"
       APP_URL: http://localhost:8000
       DB_CONNECTION: mysql
@@ -57,10 +58,19 @@ services:
       CACHE_STORE: database
       QUEUE_CONNECTION: database
       FILESYSTEM_DISK: local
+      SANCTUM_STATEFUL_DOMAINS: "localhost:5173,localhost"
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/var/www/backend
+      # Mount folder-folder yang aktif diubah saat development
+      # JANGAN mount seluruh ./backend karena akan menimpa /vendor dari build!
+      - ./backend/app:/var/www/backend/app
+      - ./backend/config:/var/www/backend/config
+      - ./backend/routes:/var/www/backend/routes
+      - ./backend/database:/var/www/backend/database
+      - ./backend/resources:/var/www/backend/resources
+      - ./backend/public:/var/www/backend/public
+      # Named volumes untuk vendor & storage (diisi saat container start)
       - backend_vendor:/var/www/backend/vendor
       - backend_storage:/var/www/backend/storage
     depends_on:

@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0', // Dibutuhkan agar container bisa diakses dari host
       port: 5173,
+      watch: {
+        usePolling: true, // Memastikan HMR bekerja lancar di Docker (terutama Windows/WSL2)
+      },
       proxy: {
         '/api': {
           // Docker: gunakan VITE_API_TARGET=http://backend:8000

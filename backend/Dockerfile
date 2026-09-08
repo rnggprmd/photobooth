@@ -42,8 +42,9 @@ COPY . .
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize
 
-# Make entrypoint executable
-RUN chmod +x /var/www/backend/docker-entrypoint.sh
+# Clean CRLF if checked out on Windows and make entrypoint executable
+RUN sed -i 's/\r$//' /var/www/backend/docker-entrypoint.sh && \
+    chmod +x /var/www/backend/docker-entrypoint.sh
 
 EXPOSE 8000
 

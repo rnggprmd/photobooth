@@ -65,10 +65,15 @@ done
 
 echo "✅ MySQL is ready and connected to database!"
 
-# ── 5. Jalankan migrasi ───────────────────────────────────────────
+# ── 5. Jalankan migrasi & seed demo data ──────────────────────────
 echo "🗄️  Running migrations..."
 php artisan migrate --force || {
-    echo "⚠️  Migration encountered an error, continuing..."
+    echo "⚠️  Migration encountered an issue, continuing..."
+}
+
+echo "🌱 Seeding initial demo data (roles, superadmin, packages, templates)..."
+php artisan db:seed --force || {
+    echo "⚠️  Seeding encountered an issue, continuing..."
 }
 
 # ── 6. Clear config & route ──────────────────────────────────────
@@ -82,10 +87,18 @@ php artisan storage:link 2>/dev/null || true
 
 # ── 8. Start Laravel dev server ──────────────────────────────────
 echo ""
-echo "═══════════════════════════════════════"
-echo "  ✅ Photobooth Backend ready!"
-echo "  🌐 http://localhost:8000"
-echo "═══════════════════════════════════════"
+echo "══════════════════════════════════════════════════════════"
+echo "  ✅ Photobooth Backend is Ready!"
+echo "  🌐 Backend API : http://localhost:8000"
+echo "  🌐 Frontend    : http://localhost:5173"
+echo "  🗄️  phpMyAdmin  : http://localhost:8080 (root / no pass)"
+echo ""
+echo "  🔑 Akun Demo Siap Pakai (Password: password):"
+echo "     - Super Admin : superadmin@photobooth.test"
+echo "     - Tenant Admin: tenant@photobooth.test"
+echo "     - Operator    : operator@photobooth.test"
+echo "     - Management  : management@photobooth.test"
+echo "══════════════════════════════════════════════════════════"
 echo ""
 
 exec php artisan serve --host=0.0.0.0 --port=8000

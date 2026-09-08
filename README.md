@@ -39,6 +39,17 @@ docker compose up -d
 
 > **Login phpMyAdmin:** Server: `db`, Username: `root`, Password: _(kosong)_
 
+### 🔑 Akun Demo Siap Pakai
+
+Semua akun sudah otomatis ter-seed saat Docker pertama kali dijalankan (Password untuk semua: `password`):
+
+| Role | Email | Password | Hak Akses |
+|---|---|---|---|
+| **Super Admin** | `superadmin@photobooth.test` | `password` | Kelola tenant, paket langganan SaaS, global settings |
+| **Tenant Admin** | `tenant@photobooth.test` | `password` | Kelola studio Photobooth (Lumina Booth), paket, template, user |
+| **Operator** | `operator@photobooth.test` | `password` | Menjalankan booth onsite, sesi foto, cetak |
+| **Management** | `management@photobooth.test` | `password` | Lihat laporan & transaksi bisnis |
+
 ### 4. Hentikan semua service
 
 ```bash

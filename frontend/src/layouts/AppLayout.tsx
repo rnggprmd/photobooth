@@ -18,7 +18,7 @@ export const AppLayout: React.FC = () => {
       title: 'Utama',
       items: [
         { label: 'Dashboard', path: '/', icon: 'space_dashboard' },
-        { label: 'Ringkasan Operasional', path: '/reports', icon: 'monitoring' },
+        { label: 'Ringkasan Operasional', path: '/reports', icon: 'insights' },
       ],
     },
     {

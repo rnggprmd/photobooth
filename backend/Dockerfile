@@ -27,6 +27,10 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure Git safe directory & PHP settings for photobooth uploads
+RUN git config --global --add safe.directory '*' && \
+    echo "memory_limit = 512M\nupload_max_filesize = 50M\npost_max_size = 50M\nmax_execution_time = 300" > /usr/local/etc/php/conf.d/photobooth.ini
+
 # Install Composer
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 

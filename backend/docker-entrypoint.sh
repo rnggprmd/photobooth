@@ -6,13 +6,7 @@
 
 echo "🚀 Starting Photobooth Backend..."
 
-# ── 1. Cek & install dependencies jika volume baru kosong ─────────
-if [ ! -f "vendor/autoload.php" ]; then
-    echo "📦 vendor/autoload.php not found in volume, installing dependencies..."
-    composer install --no-interaction
-fi
-
-# ── 2. Pastikan direktori storage & bootstrap/cache ada dan writable ─
+# ── 1. Pastikan direktori storage & bootstrap/cache ada dan writable ─
 mkdir -p \
     storage/app/public \
     storage/framework/cache/data \
@@ -42,7 +36,13 @@ if grep -qE "^APP_KEY=\s*$" .env || ! grep -q "^APP_KEY=" .env; then
     php artisan key:generate --force
 fi
 
-# ── 4. Tunggu MySQL & Database siap (max 60 detik) ───────────────
+# ── 4. Cek & install dependencies jika volume baru kosong ─────────
+if [ ! -f "vendor/autoload.php" ]; then
+    echo "📦 vendor/autoload.php not found in volume, installing dependencies..."
+    composer install --no-interaction
+fi
+
+# ── 5. Tunggu MySQL & Database siap (max 60 detik) ───────────────
 echo "⏳ Waiting for MySQL and database to be ready..."
 MAX_TRIES=30
 TRIES=0
@@ -71,7 +71,7 @@ done
 
 echo "✅ MySQL is ready and connected to database!"
 
-# ── 5. Jalankan migrasi & seed demo data ──────────────────────────
+# ── 6. Jalankan migrasi & seed demo data ──────────────────────────
 echo "🗄️  Running migrations..."
 php artisan migrate --force || {
     echo "⚠️  Migration encountered an issue, continuing..."
@@ -82,17 +82,17 @@ php artisan db:seed --force || {
     echo "⚠️  Seeding encountered an issue, continuing..."
 }
 
-# ── 6. Clear config & route ──────────────────────────────────────
+# ── 7. Clear config & route ──────────────────────────────────────
 echo "⚙️  Clearing config & route cache..."
 php artisan config:clear
 php artisan route:clear
 
-# ── 7. Buat symlink storage ──────────────────────────────────────
+# ── 8. Buat symlink storage ──────────────────────────────────────
 echo "🔗 Refreshing storage symlink..."
 rm -f public/storage 2>/dev/null || true
 php artisan storage:link --force 2>/dev/null || true
 
-# ── 8. Start Laravel dev server ──────────────────────────────────
+# ── 9. Start Laravel dev server ──────────────────────────────────
 echo ""
 echo "══════════════════════════════════════════════════════════"
 echo "  ✅ Photobooth Backend is Ready!"

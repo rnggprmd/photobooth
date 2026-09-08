@@ -377,7 +377,6 @@ Role utama:
 
 - Tenant Admin.
 - Operator.
-- Management.
 
 ---
 

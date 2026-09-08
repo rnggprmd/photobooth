@@ -4,15 +4,18 @@
 # ─────────────────────────────────────────────
 FROM php:8.3-cli
 
-# Install system dependencies
+# Install system dependencies & PHP extensions
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     git \
     libzip-dev \
     libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo \
         pdo_mysql \
@@ -20,8 +23,7 @@ RUN apt-get update && apt-get install -y \
         zip \
         bcmath \
         xml \
-        tokenizer \
-        ctype \
+        gd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

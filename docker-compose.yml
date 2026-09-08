@@ -87,6 +87,7 @@ services:
       VITE_API_TARGET: http://backend:8000
     ports:
       - "5173:5173"
+    command: sh -c "if [ ! -d node_modules/vite ]; then echo 'Installing frontend dependencies...' && npm install; fi && npm run dev -- --host 0.0.0.0"
     volumes:
       # Mount source frontend untuk HMR
       - ./frontend:/app

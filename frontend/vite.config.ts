@@ -11,8 +11,12 @@ export default defineConfig(({ mode }) => {
     server: {
       host: '0.0.0.0', // Dibutuhkan agar container bisa diakses dari host
       port: 5173,
+      strictPort: true,
       watch: {
         usePolling: true, // Memastikan HMR bekerja lancar di Docker (terutama Windows/WSL2)
+      },
+      hmr: {
+        clientPort: 5173, // Port WebSocket HMR yang diekspos ke browser
       },
       proxy: {
         '/api': {

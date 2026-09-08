@@ -6,7 +6,13 @@
 
 echo "🚀 Starting Photobooth Backend..."
 
-# ── 1. Pastikan direktori storage & bootstrap/cache ada dan writable ─
+# ── 1. Cek & install dependencies jika volume baru kosong ─────────
+if [ ! -f "vendor/autoload.php" ]; then
+    echo "📦 vendor/autoload.php not found in volume, installing dependencies..."
+    composer install --no-interaction
+fi
+
+# ── 2. Pastikan direktori storage & bootstrap/cache ada dan writable ─
 mkdir -p \
     storage/app/public \
     storage/framework/cache/data \

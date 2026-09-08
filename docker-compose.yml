@@ -1,0 +1,130 @@
+# ═══════════════════════════════════════════════════════════════════
+#  Photobooth – Docker Compose (Development)
+#
+#  Services:
+#    db          → MySQL 8.0           (internal :3306)
+#    backend     → Laravel 13 / PHP 8.3 (host :8000)
+#    frontend    → React + Vite         (host :5173)
+#    phpmyadmin  → phpMyAdmin           (host :8080)
+#
+#  Quickstart:
+#    docker compose up -d
+# ═══════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── MySQL 8.0 ────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: photobooth_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: photobooth
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - photobooth_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  # ── Laravel Backend ───────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: photobooth_backend
+    restart: unless-stopped
+    environment:
+      APP_NAME: Photobooth_Backend
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8000
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: photobooth
+      DB_USERNAME: root
+      DB_PASSWORD: ""
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      FILESYSTEM_DISK: local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/backend
+      - backend_vendor:/var/www/backend/vendor
+      - backend_storage:/var/www/backend/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - photobooth_network
+
+  # ── React + Vite Frontend ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: photobooth_frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api
+      # Proxy target di dalam network Docker (backend-to-backend)
+      VITE_API_TARGET: http://backend:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount source code untuk HMR (Hot Module Replacement)
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - photobooth_network
+
+  # ── phpMyAdmin ───────────────────────────────────────────────────
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: photobooth_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ""
+      MYSQL_ROOT_PASSWORD: ""
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - photobooth_network
+
+# ── Volumes ──────────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+    driver: local
+  backend_vendor:
+    driver: local
+  backend_storage:
+    driver: local
+  frontend_node_modules:
+    driver: local
+
+# ── Networks ─────────────────────────────────────────────────────────
+networks:
+  photobooth_network:
+    driver: bridge

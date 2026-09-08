@@ -1,9 +1,78 @@
 # 📸 Photobooth App
 
-Aplikasi Photobooth modern dengan arsitektur terpisah:
-- **Backend**: [Laravel 13](https://laravel.com/) (RESTful API & Sanctum)
+Aplikasi Photobooth modern berbasis SaaS dengan arsitektur terpisah:
+
+- **Backend**: [Laravel 13](https://laravel.com/) — RESTful API + Sanctum Auth
 - **Frontend**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) + [Lucide Icons](https://lucide.dev/)
+- **Database**: MySQL 8.0
 - **Repository**: [rnggprmd/photobooth](https://github.com/rnggprmd/photobooth.git)
+
+---
+
+## 🐳 Quick Start — Docker (Direkomendasikan)
+
+> **Tidak perlu install PHP, Composer, Node, atau MySQL secara manual!**
+> Cukup pastikan [Docker Desktop](https://www.docker.com/products/docker-desktop/) sudah terinstall dan berjalan.
+
+### 1. Clone repository
+
+```bash
+git clone https://github.com/rnggprmd/photobooth.git
+cd photobooth
+```
+
+### 2. Jalankan semua service
+
+```bash
+docker compose up -d
+```
+
+> Pertama kali build akan memakan waktu beberapa menit untuk mengunduh image dan menginstall dependencies.
+
+### 3. Akses aplikasi
+
+| Service | URL | Keterangan |
+|---|---|---|
+| 🌐 Frontend (React) | http://localhost:5173 | Aplikasi utama |
+| ⚙️ Backend (Laravel) | http://localhost:8000 | REST API |
+| 🗄️ phpMyAdmin | http://localhost:8080 | Database manager |
+
+> **Login phpMyAdmin:** Server: `db`, Username: `root`, Password: _(kosong)_
+
+### 4. Hentikan semua service
+
+```bash
+docker compose down
+```
+
+> Untuk menghapus data database juga (reset total):
+> ```bash
+> docker compose down -v
+> ```
+
+---
+
+## 🔧 Perintah Docker yang Berguna
+
+```bash
+# Lihat log semua service secara realtime
+docker compose logs -f
+
+# Lihat log service tertentu
+docker compose logs -f backend
+docker compose logs -f frontend
+
+# Masuk ke shell container backend (Laravel)
+docker compose exec backend bash
+
+# Jalankan artisan command
+docker compose exec backend php artisan migrate:fresh --seed
+docker compose exec backend php artisan tinker
+
+# Rebuild ulang image (setelah ubah Dockerfile atau install package baru)
+docker compose build --no-cache
+docker compose up -d
+```
 
 ---
 
@@ -11,71 +80,75 @@ Aplikasi Photobooth modern dengan arsitektur terpisah:
 
 ```text
 photobooth/
-├── backend/            # Laravel API (PHP 8.4+)
+├── docker-compose.yml       # Orkestrasi semua Docker service
+├── backend/                 # Laravel API (PHP 8.3)
+│   ├── Dockerfile           # Image builder untuk backend
+│   ├── docker-entrypoint.sh # Script bootstrap (migrate, key:generate, dll)
+│   ├── .env.docker          # Template .env khusus Docker
 │   ├── app/
 │   ├── config/
-│   ├── routes/
-│   │   ├── api.php     # Endpoint REST API (e.g. /api/health)
-│   │   └── web.php
-│   └── .env            # Konfigurasi database & app
-├── frontend/           # React SPA (Vite)
-│   ├── src/
-│   │   ├── api.ts      # Client Axios dengan base URL API
-│   │   ├── App.tsx     # Studio Photobooth & Status Checker
-│   │   └── main.tsx
-│   └── vite.config.ts  # Config Vite + Proxy /api ke Laravel
-└── README.md
+│   └── routes/
+│       ├── api.php          # Endpoint REST API
+│       └── web.php
+└── frontend/                # React SPA (Vite)
+    ├── Dockerfile           # Image builder untuk frontend
+    ├── src/
+    │   ├── api/             # Axios client modules
+    │   ├── components/      # Reusable UI components
+    │   └── pages/           # Halaman aplikasi
+    └── vite.config.ts       # Config Vite + Proxy /api ke Laravel
 ```
 
 ---
 
-## 🚀 Cara Menjalankan Project
+## 💻 Menjalankan Tanpa Docker (Manual — Laragon)
 
-### 1. Menjalankan Backend (Laravel)
+Jika ingin menjalankan secara lokal tanpa Docker:
 
-Buka terminal di root project:
+### Backend (Laravel)
 
 ```powershell
 cd backend
 
-# Buat database 'photobooth' di MySQL Laragon (HeidiSQL / phpMyAdmin), lalu migrasi:
-php artisan migrate
+# Buat file .env
+cp .env.example .env
 
-# Jalankan server backend:
+# Buat database 'photobooth' di MySQL (HeidiSQL/phpMyAdmin Laragon)
+# Pastikan DB_HOST=127.0.0.1 di .env
+
+php artisan key:generate
+php artisan migrate
 php artisan serve
 ```
-> Backend akan aktif di: `http://localhost:8000` (atau otomatis di Laragon virtual host jika diaktifkan).
 
----
+> Backend aktif di: `http://localhost:8000`
 
-### 2. Menjalankan Frontend (React Vite)
-
-Buka tab terminal baru:
+### Frontend (React Vite)
 
 ```powershell
 cd frontend
-
-# Jalankan development server:
+npm install
 npm run dev
 ```
-> Frontend akan aktif di: `http://localhost:5173`
+
+> Frontend aktif di: `http://localhost:5173`
 
 ---
 
-## 🔌 API Endpoint
+## 🔌 API Endpoints Utama
 
 | Method | Endpoint | Keterangan |
 |---|---|---|
-| `GET` | `/api/health` | Status check koneksi backend, versi PHP, dan Laravel |
+| `GET` | `/api/health` | Status check backend |
+| `POST` | `/api/auth/login` | Login user |
+| `GET` | `/api/dashboard` | Data dashboard |
+| `GET` | `/api/sessions` | Daftar photo sessions |
+| `GET` | `/api/packages` | Daftar paket |
 
 ---
 
 ## 🐙 Git Workflow
 
-Project ini telah terhubung ke remote repository GitHub:
-`https://github.com/rnggprmd/photobooth.git`
-
-Untuk push perubahan:
 ```powershell
 git add .
 git commit -m "feat: pesan commit"

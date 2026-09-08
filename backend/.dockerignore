@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────
+#  .dockerignore – Backend (Laravel)
+# ─────────────────────────────────────────────
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (akan di-install saat build)
+vendor/
+node_modules/
+
+# Build artifacts
+public/build/
+public/hot
+
+# Storage (akan di-mount via volume)
+storage/app/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Docker files (tidak perlu di dalam container)
+Dockerfile
+docker-entrypoint.sh
+
+# Tests
+tests/
+
+# Editor files
+.idea/
+.vscode/
+*.suo
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database
+database/*.sqlite
+database/*.sqlite-journal

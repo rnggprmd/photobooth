@@ -24,6 +24,7 @@ import ResultPublicPage from '../pages/gallery/ResultPublicPage';
 
 import SuperAdminTenantsPage from '../pages/superadmin/TenantsPage';
 import SuperAdminPlansPage from '../pages/superadmin/PlansPage';
+import SuperAdminDashboardPage from '../pages/superadmin/DashboardPage';
 
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
   // Main Dashboard App
@@ -42,6 +43,8 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
       { path: 'reports', element: <ReportsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'subscription', element: <SuperAdminPlansPage /> },
+      { path: 'superadmin', element: <SuperAdminDashboardPage /> },
+      { path: 'superadmin/dashboard', element: <SuperAdminDashboardPage /> },
       { path: 'superadmin/tenants', element: <SuperAdminTenantsPage /> },
       { path: 'superadmin/plans', element: <SuperAdminPlansPage /> },
     ],

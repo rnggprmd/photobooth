@@ -2,9 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import { dashboardApi } from '../../api/dashboard';
+import SuperAdminDashboardPage from '../superadmin/DashboardPage';
 
 export const DashboardPage: React.FC = () => {
   const { user, tenant } = useAuthStore();
+
+  const isSuperAdmin = Boolean(
+    user?.roles?.some((r: any) => (typeof r === 'string' ? r === 'super_admin' : r.name === 'super_admin'))
+  );
+
+  if (isSuperAdmin) {
+    return <SuperAdminDashboardPage />;
+  }
+
   const [showTelemetryAlert, setShowTelemetryAlert] = useState(true);
   const [eventTab, setEventTab] = useState<'all' | 'onsite' | 'hybrid'>('all');
   const [searchSession, setSearchSession] = useState('');

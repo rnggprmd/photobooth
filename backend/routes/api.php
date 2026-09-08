@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\SuperAdmin\TenantController;
 use App\Http\Controllers\Api\SuperAdmin\SubscriptionPlanController;
+use App\Http\Controllers\Api\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\Api\BusinessProfileController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\PackageController;
@@ -57,6 +58,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // SUPER ADMIN ROUTES (no tenant context required)
     // =========================================================================
     Route::middleware(['role:super_admin'])->prefix('superadmin')->group(function () {
+        // UC-005: Platform Metrics Dashboard (PRD 8.20 / BRD 15)
+        Route::get('dashboard', [SuperAdminDashboardController::class, 'index']);
+
         // UC-005: Manage Tenants
         Route::apiResource('tenants', TenantController::class);
         Route::patch('tenants/{tenant}/status', [TenantController::class, 'updateStatus']);

@@ -17,51 +17,76 @@ export const AppLayout: React.FC = () => {
     user?.roles?.some((r: any) => (typeof r === 'string' ? r === 'super_admin' : r.name === 'super_admin'))
   );
 
-  const navGroups = [
-    {
-      title: 'Utama',
-      items: [
-        { label: 'Dashboard', path: '/', icon: 'space_dashboard' },
-        { label: 'Ringkasan Operasional', path: '/reports', icon: 'insights' },
-      ],
-    },
-    {
-      title: 'Manajemen Bisnis',
-      items: [
-        { label: 'Event & Jadwal', path: '/events', icon: 'calendar_month' },
-        { label: 'Paket Layanan', path: '/packages', icon: 'loyalty' },
-        { label: 'Template & Frame Studio', path: '/templates', icon: 'crop_portrait' },
-        { label: 'Kelola Operator & Tamu', path: '/customers', icon: 'badge' },
-      ],
-    },
-    {
-      title: 'Sesi & Galeri',
-      items: [
-        { label: 'Sesi Photobooth Aktif', path: '/sessions', icon: 'live_tv' },
-        { label: 'Galeri Foto & QR', path: '/gallery', icon: 'qr_code_scanner' },
-        { label: 'Cetak & Hardware', path: '/settings?tab=hardware', icon: 'print' },
-      ],
-    },
-    {
-      title: 'Finansial & Akun',
-      items: [
-        { label: 'Transaksi & Invoice', path: '/transactions', icon: 'receipt_long' },
-        { label: 'Paket Langganan Studio', path: '/subscription', icon: 'stars' },
-        { label: 'Pengaturan Tenant', path: '/settings?tab=tenant', icon: 'settings' },
-      ],
-    },
-    ...(isSuperAdmin
-      ? [
-          {
-            title: 'Super Admin Platform',
-            items: [
-              { label: 'Kelola Semua Tenant', path: '/superadmin/tenants', icon: 'apartment' },
-              { label: 'Master Paket SaaS', path: '/superadmin/plans', icon: 'admin_panel_settings' },
-            ],
-          },
-        ]
-      : []),
-  ];
+  const navGroups = isSuperAdmin
+    ? [
+        {
+          title: 'Utama',
+          items: [
+            { label: 'Platform Dashboard', path: '/', icon: 'space_dashboard' },
+            { label: 'Ringkasan Operasional SaaS', path: '/reports', icon: 'insights' },
+          ],
+        },
+        {
+          title: 'Manajemen Bisnis',
+          items: [
+            { label: 'Kelola Semua Tenant', path: '/superadmin/tenants', icon: 'apartment' },
+            { label: 'Master Paket Langganan', path: '/superadmin/plans', icon: 'admin_panel_settings' },
+            { label: 'Event & Jadwal Studio', path: '/events', icon: 'calendar_month' },
+            { label: 'Template & Frame Global', path: '/templates', icon: 'crop_portrait' },
+            { label: 'Kelola Operator & Tamu', path: '/customers', icon: 'badge' },
+          ],
+        },
+        {
+          title: 'Sesi & Galeri',
+          items: [
+            { label: 'Monitoring Sesi Global', path: '/sessions', icon: 'live_tv' },
+            { label: 'Galeri Foto Semua Tenant', path: '/gallery', icon: 'qr_code_scanner' },
+            { label: 'Cetak & Hardware Fleet', path: '/settings?tab=hardware', icon: 'print' },
+          ],
+        },
+        {
+          title: 'Finansial & Akun',
+          items: [
+            { label: 'Transaksi & Billing SaaS', path: '/transactions', icon: 'receipt_long' },
+            { label: 'Katalog Upgrade Tenant', path: '/subscription', icon: 'stars' },
+            { label: 'Pengaturan Platform', path: '/settings?tab=tenant', icon: 'settings' },
+          ],
+        },
+      ]
+    : [
+        {
+          title: 'Utama',
+          items: [
+            { label: 'Dashboard', path: '/', icon: 'space_dashboard' },
+            { label: 'Ringkasan Operasional', path: '/reports', icon: 'insights' },
+          ],
+        },
+        {
+          title: 'Manajemen Bisnis',
+          items: [
+            { label: 'Event & Jadwal', path: '/events', icon: 'calendar_month' },
+            { label: 'Paket Layanan', path: '/packages', icon: 'loyalty' },
+            { label: 'Template & Frame Studio', path: '/templates', icon: 'crop_portrait' },
+            { label: 'Kelola Operator & Tamu', path: '/customers', icon: 'badge' },
+          ],
+        },
+        {
+          title: 'Sesi & Galeri',
+          items: [
+            { label: 'Sesi Photobooth Aktif', path: '/sessions', icon: 'live_tv' },
+            { label: 'Galeri Foto & QR', path: '/gallery', icon: 'qr_code_scanner' },
+            { label: 'Cetak & Hardware', path: '/settings?tab=hardware', icon: 'print' },
+          ],
+        },
+        {
+          title: 'Finansial & Akun',
+          items: [
+            { label: 'Transaksi & Invoice', path: '/transactions', icon: 'receipt_long' },
+            { label: 'Paket Langganan Studio', path: '/subscription', icon: 'stars' },
+            { label: 'Pengaturan Tenant', path: '/settings?tab=tenant', icon: 'settings' },
+          ],
+        },
+      ];
 
   return (
     <div className="bg-slate-50 text-slate-900 min-h-screen">
@@ -85,12 +110,22 @@ export const AppLayout: React.FC = () => {
         <div className="px-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
           <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer">
             <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-6 h-6 rounded bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0 text-indigo-600">
-                <span className="material-symbols-outlined text-[14px]">storefront</span>
+              <div
+                className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
+                  isSuperAdmin ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-indigo-50 border border-indigo-100 text-indigo-600'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[14px]">
+                  {isSuperAdmin ? 'admin_panel_settings' : 'storefront'}
+                </span>
               </div>
               <div className="truncate">
-                <p className="text-xs truncate text-slate-900 font-semibold leading-tight">{tenant?.name || 'Lumina Studio & Co.'}</p>
-                <p className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">Jakarta Main Operations</p>
+                <p className="text-xs truncate text-slate-900 font-semibold leading-tight">
+                  {isSuperAdmin ? 'Super Admin Console' : tenant?.name || 'Lumina Studio & Co.'}
+                </p>
+                <p className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">
+                  {isSuperAdmin ? 'Platform Root Access' : 'Jakarta Main Operations'}
+                </p>
               </div>
             </div>
             <span className="material-symbols-outlined text-slate-400 text-[16px]">unfold_more</span>
@@ -156,13 +191,15 @@ export const AppLayout: React.FC = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200/60 text-xs font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="font-semibold">Starter Plan</span>
+              <span className="font-semibold">{isSuperAdmin ? 'Super Admin Platform' : 'Starter Plan'}</span>
               <span className="text-slate-300">•</span>
-              <span className="font-mono text-slate-500">82% Kuota Sesi</span>
+              <span className="font-mono text-slate-500">{isSuperAdmin ? 'Root Access' : '82% Kuota Sesi'}</span>
             </div>
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer border border-slate-200/70 w-72">
               <span className="material-symbols-outlined text-[16px]">search</span>
-              <span className="text-xs text-slate-500 flex-1">Cari sesi, event, foto...</span>
+              <span className="text-xs text-slate-500 flex-1">
+                {isSuperAdmin ? 'Cari tenant, plan, event...' : 'Cari sesi, event, foto...'}
+              </span>
               <kbd className="px-1.5 py-0.5 rounded bg-white text-slate-400 text-[10px] font-mono border border-slate-200 shadow-2xs">⌘K</kbd>
             </div>
           </div>
@@ -170,16 +207,26 @@ export const AppLayout: React.FC = () => {
           <div className="flex items-center gap-3">
             <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs text-slate-600">
               <span className="material-symbols-outlined text-[15px] text-emerald-600">check_circle</span>
-              <span className="text-[11px] font-medium">Auto-Sync Aktif</span>
+              <span className="text-[11px] font-medium">{isSuperAdmin ? 'SaaS Core Online' : 'Auto-Sync Aktif'}</span>
             </div>
 
-            <Link
-              to="/booth/onsite"
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">fullscreen</span>
-              <span>Mode Booth On-Site</span>
-            </Link>
+            {isSuperAdmin ? (
+              <Link
+                to="/superadmin/tenants"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">domain</span>
+                <span>Console Tenant</span>
+              </Link>
+            ) : (
+              <Link
+                to="/booth/onsite"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px]">fullscreen</span>
+                <span>Mode Booth On-Site</span>
+              </Link>
+            )}
 
             <div className="h-5 w-[1px] bg-slate-200"></div>
 

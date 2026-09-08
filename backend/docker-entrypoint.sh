@@ -41,19 +41,19 @@ echo "⏳ Waiting for MySQL and database to be ready..."
 MAX_TRIES=30
 TRIES=0
 
-until php -r "
-    \$host = getenv('DB_HOST') ?: 'db';
-    \$port = getenv('DB_PORT') ?: '3306';
-    \$db   = getenv('DB_DATABASE') ?: 'photobooth';
-    \$user = getenv('DB_USERNAME') ?: 'root';
-    \$pass = (getenv('DB_PASSWORD') !== false) ? getenv('DB_PASSWORD') : '';
+until php -r '
+    $host = getenv("DB_HOST") ?: "db";
+    $port = getenv("DB_PORT") ?: "3306";
+    $db   = getenv("DB_DATABASE") ?: "photobooth";
+    $user = getenv("DB_USERNAME") ?: "root";
+    $pass = (getenv("DB_PASSWORD") !== false) ? getenv("DB_PASSWORD") : "";
     try {
-        new PDO('mysql:host=' . \$host . ';port=' . \$port . ';dbname=' . \$db, \$user, \$pass);
-        echo 'connected';
-    } catch (Exception \$e) {
+        new PDO("mysql:host={$host};port={$port};dbname={$db}", $user, $pass);
+        echo "connected";
+    } catch (Throwable $e) {
         exit(1);
     }
-" 2>/dev/null | grep -q "connected"; do
+' 2>/dev/null | grep -q "connected"; do
     TRIES=$((TRIES + 1))
     if [ $TRIES -ge $MAX_TRIES ]; then
         echo "❌ MySQL/database not ready after ${MAX_TRIES} attempts. Exiting."

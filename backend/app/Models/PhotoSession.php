@@ -78,6 +78,11 @@ class PhotoSession extends Model
         return $this->hasOne(PhotoResult::class, 'session_id')->latestOfMany();
     }
 
+    public function result()
+    {
+        return $this->hasOne(PhotoResult::class, 'session_id')->latestOfMany();
+    }
+
     // -------------------------------------------------------------------------
     // Scopes
     // -------------------------------------------------------------------------

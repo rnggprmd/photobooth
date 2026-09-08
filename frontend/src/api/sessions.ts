@@ -68,6 +68,11 @@ export const sessionsApi = {
     const res = await apiClient.get<ApiResponse<PhotoResult>>(`/booth/session/${token}/result`);
     return res.data;
   },
+
+  reprint: async (id: number): Promise<ApiResponse<unknown>> => {
+    const res = await apiClient.post<ApiResponse<unknown>>(`/sessions/${id}/reprint`);
+    return res.data;
+  },
 };
 
 export default sessionsApi;

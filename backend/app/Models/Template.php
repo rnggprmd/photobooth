@@ -48,6 +48,11 @@ class Template extends Model
         return $this->belongsTo(MediaFile::class, 'preview_media_id');
     }
 
+    public function previewMedia()
+    {
+        return $this->belongsTo(MediaFile::class, 'preview_media_id');
+    }
+
     public function packages()
     {
         return $this->belongsToMany(Package::class, 'package_templates');

@@ -40,6 +40,11 @@ class TemplateVersion extends Model
         return $this->hasMany(TemplatePhotoSlot::class)->orderBy('slot_order');
     }
 
+    public function slots()
+    {
+        return $this->hasMany(TemplatePhotoSlot::class)->orderBy('slot_order');
+    }
+
     public function elements()
     {
         return $this->hasMany(TemplateElement::class)->orderBy('z_index');

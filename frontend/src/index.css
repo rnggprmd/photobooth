@@ -3,11 +3,13 @@
     margin: 0;
     padding: 0;
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
     overscroll-behavior: none;
-    background-color: #fbf8ff;
-    color: #1a1b22;
+    background-color: #f8fafc;
+    color: #0f172a;
   }
   main > :first-child {
     margin-top: 0 !important;

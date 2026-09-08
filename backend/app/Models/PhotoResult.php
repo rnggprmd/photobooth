@@ -30,12 +30,27 @@ class PhotoResult extends Model
         return $this->belongsTo(PhotoSession::class, 'session_id');
     }
 
+    public function photoSession()
+    {
+        return $this->belongsTo(PhotoSession::class, 'session_id');
+    }
+
     public function templateVersion()
     {
         return $this->belongsTo(TemplateVersion::class);
     }
 
     public function finalMedia()
+    {
+        return $this->belongsTo(MediaFile::class, 'final_media_id');
+    }
+
+    public function compositeMedia()
+    {
+        return $this->belongsTo(MediaFile::class, 'final_media_id');
+    }
+
+    public function qrMedia()
     {
         return $this->belongsTo(MediaFile::class, 'final_media_id');
     }

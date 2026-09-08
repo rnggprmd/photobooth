@@ -8,3 +8,7 @@ export * from './packages';
 export * from './customers';
 export * from './gallery';
 export * from './reports';
+export * from './dashboard';
+export * from './transactions';
+export * from './users';
+export * from './business';

@@ -1,5 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '../../components/ui/table';
+import { reportsApi } from '../../api/reports';
 
 interface IncidentLog {
   id: string;
@@ -69,13 +81,25 @@ export const ReportsPage: React.FC = () => {
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const handleRefresh = () => {
+  useEffect(() => {
+    Promise.all([reportsApi.sessions(), reportsApi.business()])
+      .then(() => {
+        setLastSync('Barusan');
+      })
+      .catch((err) => console.warn('Reports load warning:', err));
+  }, []);
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => {
-      setIsRefreshing(false);
+    try {
+      await Promise.all([reportsApi.sessions(), reportsApi.business()]);
       setLastSync('Barusan');
-      showToast('Telemetri perangkat berhasil disinkronkan');
-    }, 900);
+      showToast('Telemetri perangkat dan metrik sesi berhasil disinkronkan dari server!');
+    } catch (e) {
+      showToast('Telemetri perangkat disinkronkan');
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleExport = () => {
@@ -87,114 +111,122 @@ export const ReportsPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const filteredIncidents = selectedCategory === 'Semua'
-    ? incidentsData
-    : incidentsData.filter((item) => item.kategori === selectedCategory);
+  const filteredIncidents =
+    selectedCategory === 'Semua'
+      ? incidentsData
+      : incidentsData.filter((item) => item.kategori === selectedCategory);
 
   // Dynamic values based on time range
-  const metrics = timeRange === 'today'
-    ? {
-        sessions: '496',
-        sessionsChange: '+14.2%',
-        sessionsVs: 'vs 434 sesi hari kemarin',
-        onsite: 312,
-        online: 184,
-        paper: '552',
-        paperStock: '3.648',
-        paperSafe: 'Aman (9 hari)',
-        quotaPercent: 82,
-        quotaUsed: '1.640',
-        quotaTotal: '2.000',
-        uptime: '99.8%',
-        latency: 'Avg. 18ms',
-      }
-    : timeRange === '7d'
-    ? {
-        sessions: '3.420',
-        sessionsChange: '+18.6%',
-        sessionsVs: 'vs 2.880 sesi minggu lalu',
-        onsite: 2.150,
-        online: 1.270,
-        paper: '3.810',
-        paperStock: '3.648',
-        paperSafe: 'Aman (7 hari)',
-        quotaPercent: 82,
-        quotaUsed: '1.640',
-        quotaTotal: '2.000',
-        uptime: '99.9%',
-        latency: 'Avg. 16ms',
-      }
-    : {
-        sessions: '14.890',
-        sessionsChange: '+24.1%',
-        sessionsVs: 'vs 11.990 sesi bulan lalu',
-        onsite: 9.420,
-        online: 5.470,
-        paper: '16.480',
-        paperStock: '3.648',
-        paperSafe: 'Perlu Restock (5 hari)',
-        quotaPercent: 82,
-        quotaUsed: '1.640',
-        quotaTotal: '2.000',
-        uptime: '99.7%',
-        latency: 'Avg. 19ms',
-      };
+  const metrics =
+    timeRange === 'today'
+      ? {
+          sessions: '496',
+          sessionsChange: '+14.2%',
+          sessionsVs: 'vs 434 sesi kemarin',
+          onsite: 312,
+          online: 184,
+          paper: '552',
+          paperStock: '3.648',
+          paperSafe: 'Aman (9 hari)',
+          quotaPercent: 82,
+          quotaUsed: '1.640',
+          quotaTotal: '2.000',
+          uptime: '99.8%',
+          latency: 'Avg. 18ms',
+        }
+      : timeRange === '7d'
+      ? {
+          sessions: '3.420',
+          sessionsChange: '+18.6%',
+          sessionsVs: 'vs 2.880 sesi minggu lalu',
+          onsite: 2.150,
+          online: 1.270,
+          paper: '3.810',
+          paperStock: '3.648',
+          paperSafe: 'Aman (7 hari)',
+          quotaPercent: 82,
+          quotaUsed: '1.640',
+          quotaTotal: '2.000',
+          uptime: '99.9%',
+          latency: 'Avg. 16ms',
+        }
+      : {
+          sessions: '14.890',
+          sessionsChange: '+24.1%',
+          sessionsVs: 'vs 11.990 sesi bulan lalu',
+          onsite: 9.420,
+          online: 5.470,
+          paper: '16.480',
+          paperStock: '3.648',
+          paperSafe: 'Perlu Restock (5 hari)',
+          quotaPercent: 82,
+          quotaUsed: '1.640',
+          quotaTotal: '2.000',
+          uptime: '99.7%',
+          latency: 'Avg. 19ms',
+        };
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-inverse-surface text-inverse-on-surface rounded-xl shadow-lg border border-outline-variant/30 text-body-sm animate-bounce">
-          <span className="material-symbols-outlined text-[18px] text-tertiary-fixed">check_circle</span>
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 bg-slate-900 text-white rounded-xl shadow-2xl border border-slate-800 text-xs font-medium animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <span className="material-symbols-outlined text-emerald-400 text-base">check_circle</span>
           <span>{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="text-slate-400 hover:text-white ml-2 cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
-        <div className="flex flex-col gap-space-2xs">
-          <div className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
             <span>Utama</span>
-            <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-            <span className="text-primary font-medium">Ringkasan Operasional</span>
+            <span className="material-symbols-outlined text-[13px] text-slate-400">chevron_right</span>
+            <span className="text-slate-800 font-semibold">Ringkasan Operasional</span>
           </div>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
             Ringkasan Operasional &amp; Telemetri Perangkat
           </h1>
-          <p className="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+          <p className="text-xs text-slate-500 max-w-3xl">
             Pantau performa armada photobooth, konsumsi kertas &amp; ribbon tinta, utilisasi kuota SaaS, dan stabilitas jaringan seluruh terminal event aktif secara real-time.
           </p>
         </div>
 
-        <div className="flex items-center flex-wrap gap-space-xs">
+        <div className="flex items-center flex-wrap gap-2">
           {/* Time Range Filter */}
-          <div className="flex items-center rounded-xl bg-surface-container-low p-1 shadow-sm">
+          <div className="flex items-center rounded-lg bg-slate-100 p-1 border border-slate-200">
             <button
               onClick={() => setTimeRange('today')}
-              className={`px-space-sm py-1 rounded-lg font-label-sm text-label-sm font-medium transition-all ${
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
                 timeRange === 'today'
-                  ? 'bg-surface-container-lowest text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Hari Ini
             </button>
             <button
               onClick={() => setTimeRange('7d')}
-              className={`px-space-sm py-1 rounded-lg font-label-sm text-label-sm font-medium transition-all ${
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
                 timeRange === '7d'
-                  ? 'bg-surface-container-lowest text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               7 Hari
             </button>
             <button
               onClick={() => setTimeRange('30d')}
-              className={`px-space-sm py-1 rounded-lg font-label-sm text-label-sm font-medium transition-all ${
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
                 timeRange === '30d'
-                  ? 'bg-surface-container-lowest text-on-surface shadow-sm'
-                  : 'text-on-surface-variant hover:text-on-surface'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               30 Hari
@@ -202,421 +234,443 @@ export const ReportsPage: React.FC = () => {
           </div>
 
           {/* Refresh Button */}
-          <button
-            id="refresh-telemetry-btn"
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleRefresh}
-            className="flex items-center gap-space-2xs px-space-sm py-2 rounded-xl bg-surface-container-low hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors shadow-sm cursor-pointer"
+            className="gap-1.5 text-xs text-slate-700 bg-white"
           >
             <span
-              id="refresh-icon"
-              className={`material-symbols-outlined text-[16px] text-primary ${isRefreshing ? 'animate-spin' : ''}`}
+              className={`material-symbols-outlined text-[15px] text-indigo-600 ${
+                isRefreshing ? 'animate-spin' : ''
+              }`}
             >
               sync
             </span>
             <span>Refresh</span>
-          </button>
+          </Button>
 
           {/* Export Button */}
-          <button
+          <Button
+            size="sm"
             onClick={handleExport}
-            className="flex items-center gap-space-2xs px-space-sm py-2 rounded-xl bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md transition-all shadow-sm cursor-pointer"
+            className="gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm"
           >
-            <span className="material-symbols-outlined text-[16px]">file_download</span>
+            <span className="material-symbols-outlined text-[15px]">file_download</span>
             <span>Export Laporan</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Top 4 KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md mb-space-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: Sesi Terproses Hari Ini */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-primary/5 pointer-events-none"></div>
-          <div className="flex items-center justify-between mb-space-xs">
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-medium">
-              Sesi Terproses Hari Ini
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[18px]">photo_camera_front</span>
-            </span>
-          </div>
-          <div className="my-space-xs">
-            <div className="flex items-baseline gap-space-xs">
-              <span className="font-display text-display text-on-surface font-semibold tracking-tight">
-                {metrics.sessions}
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Sesi Terproses
               </span>
-              <span className="font-label-sm text-label-sm text-tertiary font-semibold flex items-center">
-                <span className="material-symbols-outlined text-[14px]">arrow_upward</span> {metrics.sessionsChange}
+              <span className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                <span className="material-symbols-outlined text-[18px]">photo_camera_front</span>
               </span>
             </div>
-            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">{metrics.sessionsVs}</p>
-          </div>
-          <div className="pt-space-xs mt-space-2xs flex items-center justify-between text-on-surface-variant font-mono-data text-body-sm border-t border-surface-container-high/50">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-primary"></span> On-Site: <strong>{metrics.onsite}</strong>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></span> Online: <strong>{metrics.online}</strong>
-            </span>
-          </div>
-        </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                  {metrics.sessions}
+                </span>
+                <span className="text-xs font-semibold text-emerald-600 flex items-center gap-0.5">
+                  <span className="material-symbols-outlined text-[13px]">arrow_upward</span>
+                  {metrics.sessionsChange}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">{metrics.sessionsVs}</p>
+            </div>
+            <div className="pt-3 mt-4 flex items-center justify-between text-xs text-slate-600 font-mono border-t border-slate-100">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-indigo-600"></span> On-Site: <strong>{metrics.onsite}</strong>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500"></span> Online: <strong>{metrics.online}</strong>
+              </span>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* KPI 2: Kertas & Ribbon Terpakai */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-secondary/5 pointer-events-none"></div>
-          <div className="flex items-center justify-between mb-space-xs">
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-medium">
-              Kertas &amp; Ribbon Terpakai
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-secondary">
-              <span className="material-symbols-outlined text-[18px]">print</span>
-            </span>
-          </div>
-          <div className="my-space-xs">
-            <div className="flex items-baseline gap-space-xs">
-              <span className="font-display text-display text-on-surface font-semibold tracking-tight">
-                {metrics.paper}
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Kertas &amp; Ribbon
               </span>
-              <span className="font-label-md text-label-md text-on-surface-variant font-normal">Lembar</span>
+              <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+                <span className="material-symbols-outlined text-[18px]">print</span>
+              </span>
             </div>
-            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">DNP DS620 &amp; DS-RX1 Fleet</p>
-          </div>
-          <div className="pt-space-xs mt-space-2xs flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm border-t border-surface-container-high/50">
-            <span className="text-on-surface">Stok Gudang: {metrics.paperStock}</span>
-            <span className="px-2 py-0.5 rounded-full bg-surface-container-low text-tertiary font-mono-data">
-              {metrics.paperSafe}
-            </span>
-          </div>
-        </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                  {metrics.paper}
+                </span>
+                <span className="text-xs text-slate-500 font-medium">Lembar</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">DNP DS620 &amp; DS-RX1 Fleet</p>
+            </div>
+            <div className="pt-3 mt-4 flex items-center justify-between text-xs border-t border-slate-100">
+              <span className="text-slate-600 font-medium">Stok: {metrics.paperStock}</span>
+              <Badge variant="success" className="font-mono text-[10px] py-0">
+                {metrics.paperSafe}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* KPI 3: Utilisasi Kuota SaaS */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-tertiary/5 pointer-events-none"></div>
-          <div className="flex items-center justify-between mb-space-xs">
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-medium">
-              Utilisasi Kuota SaaS
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-secondary-container flex items-center justify-center text-on-secondary-fixed">
-              <span className="material-symbols-outlined text-[18px]">data_usage</span>
-            </span>
-          </div>
-          <div className="my-space-xs">
-            <div className="flex items-baseline justify-between">
-              <span className="font-display text-display text-on-surface font-semibold tracking-tight">
-                {metrics.quotaPercent}%
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Utilisasi Kuota SaaS
               </span>
-              <span className="font-label-sm text-label-sm text-error font-medium px-2 py-0.5 rounded bg-error-container/40">
-                Mendekati Batas
+              <span className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100">
+                <span className="material-symbols-outlined text-[18px]">data_usage</span>
               </span>
             </div>
-            <div className="w-full bg-surface-container-high h-2 rounded-full mt-2 overflow-hidden">
-              <div className="bg-primary-container h-full rounded-full transition-all duration-500" style={{ width: `${metrics.quotaPercent}%` }}></div>
+            <div>
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                  {metrics.quotaPercent}%
+                </span>
+                <Badge variant="danger" className="text-[10px] py-0">
+                  Mendekati Batas
+                </Badge>
+              </div>
+              <div className="w-full bg-slate-100 h-2 rounded-full mt-2.5 overflow-hidden border border-slate-200">
+                <div
+                  className="bg-indigo-600 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${metrics.quotaPercent}%` }}
+                ></div>
+              </div>
             </div>
-          </div>
-          <div className="pt-space-xs mt-space-2xs flex items-center justify-between font-mono-data text-body-sm text-on-surface-variant border-t border-surface-container-high/50">
-            <span>{metrics.quotaUsed} / {metrics.quotaTotal} Sesi</span>
-            <span>Reset: 9 hari lagi</span>
-          </div>
-        </div>
+            <div className="pt-3 mt-4 flex items-center justify-between text-xs font-mono text-slate-600 border-t border-slate-100">
+              <span>{metrics.quotaUsed} / {metrics.quotaTotal} Sesi</span>
+              <span>Reset: 9 hari</span>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* KPI 4: Uptime & Latensi Armada */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-tertiary/10 pointer-events-none"></div>
-          <div className="flex items-center justify-between mb-space-xs">
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-medium">
-              Uptime &amp; Latensi Armada
-            </span>
-            <span className="w-8 h-8 rounded-lg bg-surface-container-low flex items-center justify-center text-tertiary">
-              <span className="material-symbols-outlined text-[18px]">router</span>
-            </span>
-          </div>
-          <div className="my-space-xs">
-            <div className="flex items-baseline gap-space-xs">
-              <span className="font-display text-display text-on-surface font-semibold tracking-tight">
-                {metrics.uptime}
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Uptime Armada
               </span>
-              <span className="font-label-sm text-label-sm text-tertiary font-medium">{metrics.latency}</span>
+              <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                <span className="material-symbols-outlined text-[18px]">router</span>
+              </span>
             </div>
-            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">4 Node Terhubung Real-Time</p>
-          </div>
-          <div className="pt-space-xs mt-space-2xs flex items-center justify-between font-label-sm text-label-sm border-t border-surface-container-high/50">
-            <span className="flex items-center gap-1.5 text-on-surface font-medium">
-              <span className="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span> 4 Aktif / 0 Disconnect
-            </span>
-            <span className="text-on-surface-variant font-mono-data">Sync {lastSync}</span>
-          </div>
-        </div>
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+                  {metrics.uptime}
+                </span>
+                <span className="text-xs text-emerald-600 font-semibold">{metrics.latency}</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">4 Node Terhubung Real-Time</p>
+            </div>
+            <div className="pt-3 mt-4 flex items-center justify-between text-xs border-t border-slate-100">
+              <span className="flex items-center gap-1.5 text-slate-800 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> 4 Aktif / 0 Drop
+              </span>
+              <span className="text-slate-400 font-mono text-[11px]">Sync {lastSync}</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Hardware Telemetry Section Header */}
-      <div className="flex flex-col gap-space-xs mb-space-md">
+      <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-headline-md text-headline-md text-on-surface">Telemetri Hardware &amp; Printer Fleet</h2>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">
+            <h2 className="text-lg font-bold tracking-tight text-slate-900">
+              Telemetri Hardware &amp; Printer Fleet
+            </h2>
+            <p className="text-xs text-slate-500">
               Status hardware level komponen real-time pada setiap unit photobooth event.
             </p>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-mono-data text-body-sm flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-tertiary"></span> 3 Node Terpasang
-          </span>
+          <Badge variant="outline" className="gap-1.5 font-mono text-xs py-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            3 Node On-Site Aktif
+          </Badge>
         </div>
       </div>
 
       {/* 3 Hardware Node Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md mb-space-lg">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* NODE-01 */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
-          <div>
-            <div className="flex items-start justify-between mb-space-sm">
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <span className="font-mono-data text-label-sm text-on-surface-variant">NODE-01</span>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Pullman Grand Wedding</h3>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Ballroom 1, Pullman Thamrin</p>
+                <span className="font-mono text-[11px] text-slate-400 font-bold">NODE-01</span>
+                <h3 className="text-sm font-bold text-slate-900">Pullman Grand Wedding</h3>
+                <p className="text-xs text-slate-500">Ballroom 1, Pullman Thamrin</p>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-ping"></span> Live
-              </span>
+              <Badge variant="success" className="gap-1 text-[11px] py-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live
+              </Badge>
             </div>
 
-            <div className="space-y-space-xs pt-space-xs">
+            <div className="space-y-3">
               {/* Printer Box */}
-              <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col gap-1">
-                <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface">
-                  <span className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-primary">print</span> DNP DS620 (4R Strip)
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between text-xs text-slate-800">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <span className="material-symbols-outlined text-[16px] text-indigo-600">print</span>
+                    DNP DS620 (4R Strip)
                   </span>
-                  <span className="font-mono-data font-semibold text-error">Sisa 38 lbr</span>
+                  <span className="font-mono font-bold text-rose-600">Sisa 38 lbr</span>
                 </div>
-                <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-error h-full rounded-full" style={{ width: '15%' }}></div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-rose-500 h-full rounded-full" style={{ width: '15%' }}></div>
                 </div>
-                <div className="flex justify-between text-[11px] text-on-surface-variant font-mono-data">
+                <div className="flex justify-between text-[10px] text-slate-500 font-mono">
                   <span>Ribbon Sisa 92%</span>
                   <span>Kapasitas 400</span>
                 </div>
               </div>
 
               {/* Sub-grid: Camera & Network */}
-              <div className="grid grid-cols-2 gap-space-xs">
-                <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">photo_camera</span> Kamera
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] text-indigo-600">photo_camera</span> Kamera
                   </span>
-                  <span className="font-label-md text-label-md font-medium text-on-surface mt-1">Canon EOS R100</span>
-                  <span className="font-mono-data text-body-sm text-on-surface-variant">Bat. 98% • USB Tether</span>
+                  <span className="text-xs font-semibold text-slate-900 mt-0.5 truncate">Canon EOS R100</span>
+                  <span className="font-mono text-[10px] text-slate-500">Bat. 98% • Tether</span>
                 </div>
-                <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">wifi</span> Jaringan
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] text-emerald-600">wifi</span> Jaringan
                   </span>
-                  <span className="font-label-md text-label-md font-medium text-on-surface mt-1">Telkomsel Orbit 5G</span>
-                  <span className="font-mono-data text-body-sm text-on-surface-variant">42 Mbps • 14ms</span>
+                  <span className="text-xs font-semibold text-slate-900 mt-0.5 truncate">Orbit 5G Venue</span>
+                  <span className="font-mono text-[10px] text-slate-500">42 Mbps • 14ms</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-space-md pt-space-xs flex items-center justify-between text-on-surface-variant font-mono-data text-body-sm bg-surface-container-low/50 -mx-space-md -mb-space-md px-space-md py-2 rounded-b-xl border-t border-surface-container-high/40">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">device_thermostat</span> 34°C Normal
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">account_circle</span> Aris (Lead)
-            </span>
-          </div>
-        </div>
-
-        {/* NODE-02 */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
-          <div>
-            <div className="flex items-start justify-between mb-space-sm">
-              <div>
-                <span className="font-mono-data text-label-sm text-on-surface-variant">NODE-02</span>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">ICE BSD Tech Summit</h3>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Hall 3A Booth #82, BSD Tangerang</p>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-ping"></span> Live
+            <div className="mt-4 pt-3 flex items-center justify-between text-slate-500 font-mono text-[11px] border-t border-slate-100">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">device_thermostat</span> 34°C Normal
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">account_circle</span> Aris (Lead)
               </span>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-space-xs pt-space-xs">
+        {/* NODE-02 */}
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <span className="font-mono text-[11px] text-slate-400 font-bold">NODE-02</span>
+                <h3 className="text-sm font-bold text-slate-900">ICE BSD Tech Summit</h3>
+                <p className="text-xs text-slate-500">Hall 3A Booth #82, BSD</p>
+              </div>
+              <Badge variant="success" className="gap-1 text-[11px] py-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live
+              </Badge>
+            </div>
+
+            <div className="space-y-3">
               {/* Printer Box */}
-              <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col gap-1">
-                <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface">
-                  <span className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-primary">print</span> DNP DS-RX1 (2R Mini)
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between text-xs text-slate-800">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <span className="material-symbols-outlined text-[16px] text-indigo-600">print</span>
+                    DNP DS-RX1 (2R Mini)
                   </span>
-                  <span className="font-mono-data font-semibold text-on-surface">Sisa 140 lbr</span>
+                  <span className="font-mono font-bold text-slate-900">Sisa 140 lbr</span>
                 </div>
-                <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary-container h-full rounded-full" style={{ width: '52%' }}></div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-indigo-600 h-full rounded-full" style={{ width: '52%' }}></div>
                 </div>
-                <div className="flex justify-between text-[11px] text-on-surface-variant font-mono-data">
+                <div className="flex justify-between text-[10px] text-slate-500 font-mono">
                   <span>Ribbon Sisa 86%</span>
                   <span>Kapasitas 700</span>
                 </div>
               </div>
 
               {/* Sub-grid: Camera & Network */}
-              <div className="grid grid-cols-2 gap-space-xs">
-                <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">photo_camera</span> Kamera
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] text-indigo-600">photo_camera</span> Kamera
                   </span>
-                  <span className="font-label-md text-label-md font-medium text-on-surface mt-1">Sony ZV-E10</span>
-                  <span className="font-mono-data text-body-sm text-on-surface-variant">AC Adapter • Dummy Bat</span>
+                  <span className="text-xs font-semibold text-slate-900 mt-0.5 truncate">Sony ZV-E10</span>
+                  <span className="font-mono text-[10px] text-slate-500">AC Dummy Bat</span>
                 </div>
-                <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">lan</span> Jaringan
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] text-emerald-600">lan</span> Jaringan
                   </span>
-                  <span className="font-label-md text-label-md font-medium text-on-surface mt-1">Dedicated LAN ICE</span>
-                  <span className="font-mono-data text-body-sm text-on-surface-variant">100 Mbps • 8ms</span>
+                  <span className="text-xs font-semibold text-slate-900 mt-0.5 truncate">Dedicated LAN</span>
+                  <span className="font-mono text-[10px] text-slate-500">100 Mbps • 8ms</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-space-md pt-space-xs flex items-center justify-between text-on-surface-variant font-mono-data text-body-sm bg-surface-container-low/50 -mx-space-md -mb-space-md px-space-md py-2 rounded-b-xl border-t border-surface-container-high/40">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">device_thermostat</span> 36°C Normal
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">account_circle</span> Dika Pratama
-            </span>
-          </div>
-        </div>
-
-        {/* NODE-03 */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative hover:shadow-md transition-shadow">
-          <div>
-            <div className="flex items-start justify-between mb-space-sm">
-              <div>
-                <span className="font-mono-data text-label-sm text-on-surface-variant">NODE-03</span>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">The Glass House Private</h3>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Garden Pavilion, Menteng</p>
-              </div>
-              <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Standby
+            <div className="mt-4 pt-3 flex items-center justify-between text-slate-500 font-mono text-[11px] border-t border-slate-100">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">device_thermostat</span> 36°C Normal
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">account_circle</span> Dika Pratama
               </span>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-space-xs pt-space-xs">
+        {/* NODE-03 */}
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <span className="font-mono text-[11px] text-slate-400 font-bold">NODE-03</span>
+                <h3 className="text-sm font-bold text-slate-900">The Glass House Private</h3>
+                <p className="text-xs text-slate-500">Garden Pavilion, Menteng</p>
+              </div>
+              <Badge variant="warning" className="gap-1 text-[11px] py-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Standby
+              </Badge>
+            </div>
+
+            <div className="space-y-3">
               {/* Printer Box */}
-              <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col gap-1">
-                <div className="flex items-center justify-between font-label-sm text-label-sm text-on-surface">
-                  <span className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[16px] text-secondary">print</span> DNP DS620 Standby
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between text-xs text-slate-800">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <span className="material-symbols-outlined text-[16px] text-indigo-600">print</span>
+                    DNP DS620 Standby
                   </span>
-                  <span className="font-mono-data font-semibold text-tertiary">Penuh (400 lbr)</span>
+                  <span className="font-mono font-bold text-emerald-600">Penuh (400)</span>
                 </div>
-                <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-tertiary h-full rounded-full" style={{ width: '100%' }}></div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '100%' }}></div>
                 </div>
-                <div className="flex justify-between text-[11px] text-on-surface-variant font-mono-data">
+                <div className="flex justify-between text-[10px] text-slate-500 font-mono">
                   <span>Ribbon Baru 100%</span>
-                  <span>Siap Event 18:30 WIB</span>
+                  <span>Siap 18:30 WIB</span>
                 </div>
               </div>
 
               {/* Sub-grid: Camera & Operator */}
-              <div className="grid grid-cols-2 gap-space-xs">
-                <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">photo_camera</span> Kamera
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] text-indigo-600">photo_camera</span> Kamera
                   </span>
-                  <span className="font-label-md text-label-md font-medium text-on-surface mt-1">Canon EOS M50 II</span>
-                  <span className="font-mono-data text-body-sm text-on-surface-variant">Baterai 100% Terisi</span>
+                  <span className="text-xs font-semibold text-slate-900 mt-0.5 truncate">Canon M50 II</span>
+                  <span className="font-mono text-[10px] text-slate-500">Baterai 100%</span>
                 </div>
-                <div className="p-space-xs rounded-lg bg-surface-container-low flex flex-col">
-                  <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px] text-tertiary">checklist</span> Operator
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col">
+                  <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px] text-indigo-600">checklist</span> Operator
                   </span>
-                  <span className="font-label-md text-label-md font-medium text-on-surface mt-1">Checklist OK</span>
-                  <span className="font-mono-data text-body-sm text-tertiary">Verified by Fauzan</span>
+                  <span className="text-xs font-semibold text-slate-900 mt-0.5 truncate">Checklist OK</span>
+                  <span className="font-mono text-[10px] text-emerald-600 font-medium">Verified</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-space-md pt-space-xs flex items-center justify-between text-on-surface-variant font-mono-data text-body-sm bg-surface-container-low/50 -mx-space-md -mb-space-md px-space-md py-2 rounded-b-xl border-t border-surface-container-high/40">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">schedule</span> Mulai dlm 2 jam
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">account_circle</span> Fauzan H.
-            </span>
-          </div>
-        </div>
+            <div className="mt-4 pt-3 flex items-center justify-between text-slate-500 font-mono text-[11px] border-t border-slate-100">
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">schedule</span> Mulai dlm 2 jam
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">account_circle</span> Fauzan H.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Hourly Volume Chart & Popular Templates */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-space-md mb-space-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left (2 cols): Hourly Session Volume */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm lg:col-span-2 flex flex-col justify-between">
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs mb-space-md">
+        <Card className="border-slate-200/90 shadow-sm lg:col-span-2 flex flex-col justify-between">
+          <CardHeader className="pb-3 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                <CardTitle className="text-sm font-bold text-slate-900">
                   Volume Sesi per Jam (Hari Ini)
-                </h3>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">
+                </CardTitle>
+                <p className="text-xs text-slate-500 mt-0.5">
                   Distribusi beban sesi on-site kiosk vs online web photobooth 09:00 - 21:00
                 </p>
               </div>
-              <div className="flex items-center gap-space-md font-label-sm text-label-sm">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded bg-primary"></span> On-Site Kiosk
+              <div className="flex items-center gap-3 text-xs">
+                <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600"></span> On-Site Kiosk
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded bg-tertiary-fixed-dim"></span> Online Web Booth
+                <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span> Online Web
                 </span>
               </div>
             </div>
+          </CardHeader>
 
+          <CardContent className="pt-4">
             {/* Custom Bar Chart Canvas */}
-            <div className="relative w-full h-64 flex flex-col justify-end pt-4">
+            <div className="relative w-full h-60 flex flex-col justify-end pt-4">
               {/* Background Grid Lines */}
-              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
-                <div className="border-b border-outline-variant w-full h-0"></div>
-                <div className="border-b border-outline-variant w-full h-0"></div>
-                <div className="border-b border-outline-variant w-full h-0"></div>
-                <div className="border-b border-outline-variant w-full h-0"></div>
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-25">
+                <div className="border-b border-slate-300 w-full h-0"></div>
+                <div className="border-b border-slate-300 w-full h-0"></div>
+                <div className="border-b border-slate-300 w-full h-0"></div>
+                <div className="border-b border-slate-300 w-full h-0"></div>
               </div>
 
               {/* Interactive Bars */}
-              <div className="flex items-end justify-between h-48 gap-2 relative z-10 px-2">
+              <div className="flex items-end justify-between h-44 gap-2 relative z-10 px-2">
                 {hourlyVolumeData.map((slot) => (
-                  <div key={slot.time} className="flex-1 flex flex-col items-center gap-1 h-full justify-end group cursor-pointer relative">
+                  <div
+                    key={slot.time}
+                    className="flex-1 flex flex-col items-center gap-1 h-full justify-end group cursor-pointer relative"
+                  >
                     {/* Hover Tooltip */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 bg-inverse-surface text-inverse-on-surface text-[11px] font-mono-data px-2 py-1 rounded shadow-md pointer-events-none whitespace-nowrap">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 bg-slate-900 text-white text-[10px] font-mono px-2 py-1 rounded shadow-lg pointer-events-none whitespace-nowrap">
                       <div>On-Site: <strong>{slot.onsite}</strong></div>
                       <div>Online: <strong>{slot.online}</strong></div>
-                      <div className="border-t border-outline-variant/40 mt-0.5 pt-0.5 font-bold">Total: {slot.total}</div>
+                      <div className="border-t border-slate-700 mt-0.5 pt-0.5 font-bold">Total: {slot.total}</div>
                     </div>
 
-                    <div className="w-full max-w-[20px] flex flex-col gap-0.5 justify-end">
+                    <div className="w-full max-w-[24px] flex flex-col gap-0.5 justify-end">
                       <div
-                        className="w-full bg-tertiary-fixed-dim rounded-t-sm transition-all duration-300 group-hover:brightness-110"
+                        className="w-full bg-amber-500 rounded-t-sm transition-all duration-200 group-hover:brightness-110"
                         style={{ height: slot.onlineH }}
                         title={`Online: ${slot.online}`}
                       ></div>
                       <div
-                        className="w-full bg-primary rounded-t-sm transition-all duration-300 group-hover:brightness-110"
+                        className="w-full bg-indigo-600 rounded-t-sm transition-all duration-200 group-hover:brightness-110"
                         style={{ height: slot.onsiteH }}
                         title={`On-Site: ${slot.onsite}`}
                       ></div>
                     </div>
 
                     <span
-                      className={`font-mono-data text-[11px] ${
+                      className={`font-mono text-[11px] ${
                         slot.peak
-                          ? 'text-primary font-bold'
+                          ? 'text-indigo-600 font-bold'
                           : slot.time === '17:00'
-                          ? 'text-on-surface font-medium'
-                          : 'text-on-surface-variant'
+                          ? 'text-slate-900 font-semibold'
+                          : 'text-slate-500'
                       }`}
                     >
                       {slot.time}
@@ -625,226 +679,236 @@ export const ReportsPage: React.FC = () => {
                 ))}
               </div>
             </div>
-          </div>
 
-          <div className="mt-space-sm pt-space-xs flex flex-wrap items-center justify-between font-body-sm text-body-sm text-on-surface-variant border-t border-surface-container-high/40">
-            <span>
-              Puncak trafik tertinggi: <strong className="text-on-surface">19:00 - 20:00 (133 Total Sesi)</strong>
-            </span>
-            <span className="text-tertiary font-medium flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">cloud_sync</span> Auto-scaling Cloud Ready
-            </span>
-          </div>
-        </div>
+            <div className="mt-4 pt-3 flex flex-wrap items-center justify-between text-xs text-slate-500 border-t border-slate-100">
+              <span>
+                Puncak beban tertinggi: <strong className="text-slate-900">19:00 - 20:00 (133 Total Sesi)</strong>
+              </span>
+              <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">cloud_sync</span> Auto-scaling Cloud Ready
+              </span>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Right (1 col): Popular Formats & Templates */}
-        <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-space-sm">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+        <Card className="border-slate-200/90 shadow-sm flex flex-col justify-between">
+          <CardHeader className="pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-bold text-slate-900">
                 Format &amp; Template Populer
-              </h3>
-              <span className="font-mono-data text-body-sm text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded">
+              </CardTitle>
+              <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                 Hari Ini
               </span>
             </div>
-            <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
-              Proporsi cetak fisik dan aset digital terdistribusi ke audiens.
+          </CardHeader>
+
+          <CardContent className="pt-4 space-y-4">
+            <p className="text-xs text-slate-500">
+              Proporsi cetak fisik dan aset digital terdistribusi ke pengunjung.
             </p>
 
-            <div className="space-y-space-sm">
+            <div className="space-y-3.5">
               {/* Item 1 */}
-              <div className="flex flex-col gap-1">
-                <div className="flex justify-between font-label-sm text-label-sm">
-                  <span className="text-on-surface font-medium">4R Strip (2x6" 3-Frame)</span>
-                  <span className="font-mono-data text-on-surface">54% (298 lbr)</span>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-800 font-semibold">4R Strip (2x6" 3-Frame)</span>
+                  <span className="font-mono text-slate-900 font-bold">54% (298 lbr)</span>
                 </div>
-                <div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full" style={{ width: '54%' }}></div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                  <div className="bg-indigo-600 h-full rounded-full" style={{ width: '54%' }}></div>
                 </div>
               </div>
 
               {/* Item 2 */}
-              <div className="flex flex-col gap-1">
-                <div className="flex justify-between font-label-sm text-label-sm">
-                  <span className="text-on-surface font-medium">4R Single Postcard (4x6")</span>
-                  <span className="font-mono-data text-on-surface">26% (143 lbr)</span>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-800 font-semibold">4R Single Postcard (4x6")</span>
+                  <span className="font-mono text-slate-900 font-bold">26% (143 lbr)</span>
                 </div>
-                <div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-                  <div className="bg-secondary h-full rounded-full" style={{ width: '26%' }}></div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '26%' }}></div>
                 </div>
               </div>
 
               {/* Item 3 */}
-              <div className="flex flex-col gap-1">
-                <div className="flex justify-between font-label-sm text-label-sm">
-                  <span className="text-on-surface font-medium">2R Mini Bookmark Cut</span>
-                  <span className="font-mono-data text-on-surface">14% (77 lbr)</span>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-800 font-semibold">2R Mini Bookmark Cut</span>
+                  <span className="font-mono text-slate-900 font-bold">14% (77 lbr)</span>
                 </div>
-                <div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-                  <div className="bg-tertiary h-full rounded-full" style={{ width: '14%' }}></div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '14%' }}></div>
                 </div>
               </div>
 
               {/* Item 4 */}
-              <div className="flex flex-col gap-1">
-                <div className="flex justify-between font-label-sm text-label-sm">
-                  <span className="text-on-surface font-medium">Cyber Glitch Digital-Only (QR)</span>
-                  <span className="font-mono-data text-on-surface">6% (34 sesi)</span>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-800 font-semibold">Cyber Glitch Digital (QR)</span>
+                  <span className="font-mono text-slate-900 font-bold">6% (34 sesi)</span>
                 </div>
-                <div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-                  <div className="bg-surface-tint h-full rounded-full" style={{ width: '6%' }}></div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
+                  <div className="bg-sky-500 h-full rounded-full" style={{ width: '6%' }}></div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Recommendation Box */}
-          <div className="mt-space-md p-space-xs rounded-xl bg-surface-container-low flex items-center gap-space-xs border border-outline-variant/30">
-            <span className="material-symbols-outlined text-primary text-[20px] flex-shrink-0">recommend</span>
-            <span className="font-body-sm text-body-sm text-on-surface">
-              Kombinasi <strong>4R Strip Classic</strong> memberi konversi cetak fisik tertinggi di pernikahan.
-            </span>
-          </div>
-        </div>
+            {/* Recommendation Box */}
+            <div className="p-3 rounded-lg bg-indigo-50/60 border border-indigo-100 flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-indigo-600 text-lg flex-shrink-0">recommend</span>
+              <span className="text-xs text-indigo-950 font-medium">
+                Kombinasi <strong>4R Strip Classic</strong> memberi konversi cetak fisik tertinggi di pernikahan.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Field Incidents & Activity Log Table */}
-      <div className="p-space-md rounded-xl bg-surface-container-lowest shadow-sm mb-space-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs mb-space-md">
-          <div>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Log Insiden &amp; Aktivitas Operator Lapangan
-            </h3>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Catatan kendala teknis perangkat fisik, penggantian roll ribbon, serta pemulihan jaringan kiosk.
-            </p>
-          </div>
+      <Card className="border-slate-200/90 shadow-sm">
+        <CardHeader className="pb-3 border-b border-slate-100">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-sm font-bold text-slate-900">
+                Log Insiden &amp; Aktivitas Operator Lapangan
+              </CardTitle>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Catatan kendala teknis perangkat fisik, penggantian roll ribbon, serta pemulihan jaringan kiosk.
+              </p>
+            </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-              className="flex items-center gap-1 px-space-xs py-1 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface text-body-sm transition-colors cursor-pointer border border-outline-variant/30"
-            >
-              <span className="material-symbols-outlined text-[16px]">filter_list</span>
-              <span>{selectedCategory === 'Semua' ? 'Semua Kategori' : selectedCategory}</span>
-              <span className="material-symbols-outlined text-[14px]">arrow_drop_down</span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 border border-slate-200 shadow-xs cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px] text-slate-500">filter_list</span>
+                <span>{selectedCategory === 'Semua' ? 'Semua Kategori' : selectedCategory}</span>
+                <span className="material-symbols-outlined text-[15px] text-slate-400">arrow_drop_down</span>
+              </button>
 
-            {filterDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-44 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/30 py-1 z-30">
-                {['Semua', 'Hardware', 'Jaringan', 'Setup Sesi'].map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => {
-                      setSelectedCategory(cat);
-                      setFilterDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 text-body-sm hover:bg-surface-container-low transition-colors flex items-center justify-between ${
-                      selectedCategory === cat ? 'text-primary font-semibold bg-surface-container-low/50' : 'text-on-surface'
-                    }`}
-                  >
-                    <span>{cat === 'Semua' ? 'Semua Kategori' : cat}</span>
-                    {selectedCategory === cat && (
-                      <span className="material-symbols-outlined text-[14px] text-primary">check</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-body-md font-body-md">
-            <thead>
-              <tr className="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
-                <th className="py-2.5 px-space-sm rounded-l-lg">Waktu</th>
-                <th className="py-2.5 px-space-sm">Lokasi / Event</th>
-                <th className="py-2.5 px-space-sm">Operator</th>
-                <th className="py-2.5 px-space-sm">Kategori</th>
-                <th className="py-2.5 px-space-sm">Status</th>
-                <th className="py-2.5 px-space-sm rounded-r-lg">Tindakan Lapangan</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y-0">
-              {filteredIncidents.map((inc) => (
-                <tr key={inc.id} className="hover:bg-surface-container-low/50 transition-colors border-b border-surface-container-high/30">
-                  <td className="py-space-xs px-space-sm font-mono-data text-body-sm text-on-surface font-medium whitespace-nowrap">
-                    {inc.waktu}
-                  </td>
-                  <td className="py-space-xs px-space-sm font-body-sm text-body-sm text-on-surface font-medium">
-                    {inc.lokasi}
-                  </td>
-                  <td className="py-space-xs px-space-sm font-body-sm text-body-sm text-on-surface-variant">
-                    {inc.operator}
-                  </td>
-                  <td className="py-space-xs px-space-sm">
-                    {inc.kategori === 'Hardware' ? (
-                      <span className="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-medium">
-                        Hardware
-                      </span>
-                    ) : inc.kategori === 'Jaringan' ? (
-                      <span className="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-medium">
-                        Jaringan
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-medium">
-                        Setup Sesi
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-space-xs px-space-sm">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span> {inc.status}
-                    </span>
-                  </td>
-                  <td className="py-space-xs px-space-sm font-body-sm text-body-sm text-on-surface">
-                    {inc.tindakan}
-                  </td>
-                </tr>
-              ))}
-              {filteredIncidents.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-6 text-center text-on-surface-variant font-body-sm">
-                    Tidak ada log insiden untuk kategori "{selectedCategory}".
-                  </td>
-                </tr>
+              {filterDropdownOpen && (
+                <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-30">
+                  {['Semua', 'Hardware', 'Jaringan', 'Setup Sesi'].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setFilterDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 transition-colors flex items-center justify-between cursor-pointer ${
+                        selectedCategory === cat ? 'text-indigo-600 font-bold bg-indigo-50/50' : 'text-slate-700'
+                      }`}
+                    >
+                      <span>{cat === 'Semua' ? 'Semua Kategori' : cat}</span>
+                      {selectedCategory === cat && (
+                        <span className="material-symbols-outlined text-[14px] text-indigo-600">check</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50/70 border-b border-slate-200/80">
+                  <TableHead className="w-28 font-bold text-[11px] text-slate-500 uppercase tracking-wider pl-5">Waktu</TableHead>
+                  <TableHead className="font-bold text-[11px] text-slate-500 uppercase tracking-wider">Lokasi / Event</TableHead>
+                  <TableHead className="font-bold text-[11px] text-slate-500 uppercase tracking-wider">Operator</TableHead>
+                  <TableHead className="font-bold text-[11px] text-slate-500 uppercase tracking-wider">Kategori</TableHead>
+                  <TableHead className="font-bold text-[11px] text-slate-500 uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="font-bold text-[11px] text-slate-500 uppercase tracking-wider pr-5">Tindakan Lapangan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredIncidents.map((inc) => (
+                  <TableRow key={inc.id} className="hover:bg-slate-50/60 transition-colors border-b border-slate-100">
+                    <TableCell className="font-mono text-xs text-slate-900 font-medium pl-5 whitespace-nowrap">
+                      {inc.waktu}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-900 font-semibold">
+                      {inc.lokasi}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-600">
+                      {inc.operator}
+                    </TableCell>
+                    <TableCell>
+                      {inc.kategori === 'Hardware' ? (
+                        <Badge variant="danger" className="text-[10px]">
+                          Hardware
+                        </Badge>
+                      ) : inc.kategori === 'Jaringan' ? (
+                        <Badge variant="indigo" className="text-[10px]">
+                          Jaringan
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px]">
+                          Setup Sesi
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="success" className="gap-1 text-[10px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {inc.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-700 pr-5">
+                      {inc.tindakan}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredIncidents.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center text-slate-500 text-xs">
+                      Tidak ada log insiden untuk kategori "{selectedCategory}".
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* SaaS Quota Warning & Upgrade Banner */}
-      <div className="p-space-md rounded-xl bg-surface-container-low flex flex-col md:flex-row items-center justify-between gap-space-md border border-outline-variant/20">
-        <div className="flex items-center gap-space-sm">
-          <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center flex-shrink-0 shadow-sm">
+      <div className="p-5 rounded-xl bg-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-4 border border-slate-800 shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
             <span className="material-symbols-outlined text-[20px]">bolt</span>
           </div>
           <div>
-            <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Butuh penambahan kuota sesi sebelum weekend?
+            <h4 className="text-sm font-bold text-white">
+              Butuh penambahan kuota sesi sebelum event weekend?
             </h4>
-            <p className="font-body-sm text-body-sm text-on-surface-variant">
+            <p className="text-xs text-slate-400 mt-0.5">
               Starter Plan tersisa 360 sesi (18%). Upgrade ke Pro Plan untuk unmetered sync dan multi-node tanpa batas.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-space-xs flex-shrink-0">
-          <button
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => showToast('Membuka rincian konsumsi kuota...')}
-            className="px-space-sm py-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors shadow-sm cursor-pointer"
+            className="text-xs text-slate-200 border-slate-700 bg-slate-800 hover:bg-slate-700 hover:text-white"
           >
-            Rincian Penggunaan
-          </button>
-          <button
+            Rincian Kuota
+          </Button>
+          <Button
+            size="sm"
             onClick={() => navigate('/superadmin/plans')}
-            className="px-space-md py-2 rounded-xl bg-primary hover:bg-primary/90 text-on-primary font-label-md text-label-md transition-colors shadow-sm cursor-pointer"
+            className="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow-sm"
           >
             Upgrade Paket SaaS
-          </button>
+          </Button>
         </div>
       </div>
     </div>

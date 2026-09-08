@@ -13,7 +13,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Register custom middleware aliases
+        $middleware->alias([
+            'tenant' => \App\Http\Middleware\TenantMiddleware::class,
+            'subscription' => \App\Http\Middleware\CheckSubscription::class,
+            'role'   => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
+
+        $middleware->redirectGuestsTo(fn (Request $request) => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

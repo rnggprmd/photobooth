@@ -13,6 +13,10 @@ export const AppLayout: React.FC = () => {
     navigate('/auth/login');
   };
 
+  const isSuperAdmin = Boolean(
+    user?.roles?.some((r: any) => (typeof r === 'string' ? r === 'super_admin' : r.name === 'super_admin'))
+  );
+
   const navGroups = [
     {
       title: 'Utama',
@@ -42,10 +46,21 @@ export const AppLayout: React.FC = () => {
       title: 'Finansial & Akun',
       items: [
         { label: 'Transaksi & Invoice', path: '/transactions', icon: 'receipt_long' },
-        { label: 'Paket Langganan SaaS', path: '/superadmin/plans', icon: 'stars' },
+        { label: 'Paket Langganan Studio', path: '/subscription', icon: 'stars' },
         { label: 'Pengaturan Tenant', path: '/settings?tab=tenant', icon: 'settings' },
       ],
     },
+    ...(isSuperAdmin
+      ? [
+          {
+            title: 'Super Admin Platform',
+            items: [
+              { label: 'Kelola Semua Tenant', path: '/superadmin/tenants', icon: 'apartment' },
+              { label: 'Master Paket SaaS', path: '/superadmin/plans', icon: 'admin_panel_settings' },
+            ],
+          },
+        ]
+      : []),
   ];
 
   return (

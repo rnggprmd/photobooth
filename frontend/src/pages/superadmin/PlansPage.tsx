@@ -152,7 +152,19 @@ export const SuperAdminPlansPage: React.FC = () => {
     }).format(num);
   };
 
+  const [currentSub, setCurrentSub] = useState<any>(null);
+
   useEffect(() => {
+    // Fetch available plans and current subscription
+    apiClient
+      .get('/subscription')
+      .then((res) => {
+        if (res.data?.data) {
+          setCurrentSub(res.data.data);
+        }
+      })
+      .catch((err) => console.warn('Subscription fetch warning:', err));
+
     apiClient.get('/subscription/plans').catch((err) => console.warn('Plans fetch warning:', err));
   }, []);
 
@@ -160,11 +172,21 @@ export const SuperAdminPlansPage: React.FC = () => {
     setIsUpgrading(true);
     const planName = checkoutPlan?.name;
 
+    const planIdMap: Record<string, number> = {
+      'plan-starter': 2,
+      'plan-pro': 3,
+      'plan-enterprise': 4,
+    };
+    const targetPlanId = checkoutPlan ? (planIdMap[checkoutPlan.id] || 2) : 2;
+
     try {
-      await apiClient.post('/subscription/select', {
-        plan_id: checkoutPlan ? Number(checkoutPlan.id.replace('plan-', '')) || 2 : 2,
+      const res = await apiClient.post('/subscription/select', {
+        plan_id: targetPlanId,
         billing_cycle: billingCycle,
       });
+      if (res.data?.data) {
+        setCurrentSub(res.data.data);
+      }
     } catch (err) {
       console.warn('API plan upgrade fallback:', err);
     }
@@ -239,12 +261,16 @@ export const SuperAdminPlansPage: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap text-xs">
               <Badge variant="default">
-                Starter Studio Plan
+                {currentSub?.plan?.name ? `${currentSub.plan.name} Plan` : 'Starter Studio Plan'}
               </Badge>
               <span className="text-slate-300">•</span>
-              <span className="font-mono text-slate-500">Siklus Bulanan (Aktif)</span>
+              <span className="font-mono text-slate-500">
+                {currentSub?.billing_cycle === 'yearly' ? 'Siklus Tahunan (Aktif)' : 'Siklus Bulanan (Aktif)'}
+              </span>
               <span className="text-slate-300">•</span>
-              <span className="font-mono text-emerald-600 font-semibold">Reset dlm 9 Hari</span>
+              <span className="font-mono text-emerald-600 font-semibold">
+                Status: {currentSub?.status || 'Active'}
+              </span>
             </div>
             <h3 className="text-sm font-bold text-slate-900">
               1.640 / 2.000 Sesi Digunakan (82% Kuota)
@@ -321,7 +347,12 @@ export const SuperAdminPlansPage: React.FC = () => {
       {/* Pricing Cards Grid */}
       <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {plans.map((plan) => {
-          const isCurrent = plan.id === 'plan-starter';
+          const subName = (currentSub?.plan?.name || 'Starter').toLowerCase();
+          const isCurrent = subName.includes('enterprise')
+            ? plan.id === 'plan-enterprise'
+            : (subName.includes('business') || subName.includes('pro'))
+            ? plan.id === 'plan-pro'
+            : plan.id === 'plan-starter';
           const isPopular = plan.isPopular;
 
           return (

@@ -41,6 +41,7 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
       { path: 'transactions', element: <TransactionsPage /> },
       { path: 'reports', element: <ReportsPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'subscription', element: <SuperAdminPlansPage /> },
       { path: 'superadmin/tenants', element: <SuperAdminTenantsPage /> },
       { path: 'superadmin/plans', element: <SuperAdminPlansPage /> },
     ],

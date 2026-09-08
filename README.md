@@ -11,7 +11,7 @@ Aplikasi Photobooth modern dengan arsitektur terpisah:
 
 ```text
 photobooth/
-├── backend/            # Laravel API (PHP 8.3+)
+├── backend/            # Laravel API (PHP 8.4+)
 │   ├── app/
 │   ├── config/
 │   ├── routes/

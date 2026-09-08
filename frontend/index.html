@@ -4,12 +4,119 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Photobooth App</title>
+    <title>SnapStudio - Precision Booth Ops</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#001d31",
+              "inverse-on-surface": "#f1effa",
+              "on-primary": "#ffffff",
+              "secondary": "#565e74",
+              "secondary-container": "#dae2fd",
+              "inverse-primary": "#c3c0ff",
+              "tertiary-container": "#00659a",
+              "on-error-container": "#93000a",
+              "secondary-fixed": "#dae2fd",
+              "surface-tint": "#4d44e3",
+              "outline-variant": "#c7c4d8",
+              "surface-bright": "#fbf8ff",
+              "surface-container-highest": "#e3e1ec",
+              "primary-fixed-dim": "#c3c0ff",
+              "inverse-surface": "#2f3038",
+              "on-tertiary": "#ffffff",
+              "on-secondary-fixed": "#131b2e",
+              "on-secondary": "#ffffff",
+              "tertiary": "#004c76",
+              "surface-variant": "#e3e1ec",
+              "surface-container-high": "#e8e7f1",
+              "on-surface-variant": "#464555",
+              "on-primary-fixed": "#0f0069",
+              "background": "#fbf8ff",
+              "secondary-fixed-dim": "#bec6e0",
+              "primary": "#3525cd",
+              "primary-fixed": "#e2dfff",
+              "surface-dim": "#dad9e3",
+              "primary-container": "#4f46e5",
+              "error-container": "#ffdad6",
+              "on-tertiary-container": "#bedfff",
+              "tertiary-fixed": "#cce5ff",
+              "on-tertiary-fixed-variant": "#004b73",
+              "on-surface": "#1a1b22",
+              "on-background": "#1a1b22",
+              "outline": "#777587",
+              "surface-container-lowest": "#ffffff",
+              "on-error": "#ffffff",
+              "surface": "#fbf8ff",
+              "tertiary-fixed-dim": "#93ccff",
+              "error": "#ba1a1a",
+              "on-primary-fixed-variant": "#3323cc",
+              "on-primary-container": "#dad7ff",
+              "on-secondary-fixed-variant": "#3f465c",
+              "surface-container": "#eeedf7",
+              "on-secondary-container": "#5c647a",
+              "surface-container-low": "#f4f2fd"
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "0.75rem"
+            },
+            spacing: {
+              "space-2xl": "3rem",
+              "gutter-mobile": "1rem",
+              "sidebar-width": "16rem",
+              "space-2xs": "0.25rem",
+              "sidebar-collapsed": "4.5rem",
+              "space-sm": "0.75rem",
+              "container-max": "88rem",
+              "space-xl": "2rem",
+              "gutter-desktop": "1.5rem",
+              "space-md": "1rem",
+              "space-lg": "1.5rem",
+              "space-xs": "0.5rem"
+            },
+            fontFamily: {
+              "body-sm": ["Geist", "sans-serif"],
+              "headline-lg": ["Geist", "sans-serif"],
+              "body-lg": ["Geist", "sans-serif"],
+              "label-md": ["Geist", "sans-serif"],
+              "display": ["Geist", "sans-serif"],
+              "mono-data": ["Geist", "monospace"],
+              "headline-sm": ["Geist", "sans-serif"],
+              "body-md": ["Geist", "sans-serif"],
+              "label-sm": ["Geist", "sans-serif"],
+              "headline-md": ["Geist", "sans-serif"],
+              "headline-lg-mobile": ["Geist", "sans-serif"]
+            },
+            fontSize: {
+              "body-sm": ["0.75rem", { lineHeight: "1rem", letterSpacing: "0em", fontWeight: "400" }],
+              "headline-lg": ["1.75rem", { lineHeight: "2.125rem", letterSpacing: "-0.025em", fontWeight: "600" }],
+              "body-lg": ["1rem", { lineHeight: "1.5rem", letterSpacing: "-0.01em", fontWeight: "400" }],
+              "label-md": ["0.875rem", { lineHeight: "1.25rem", letterSpacing: "-0.01em", fontWeight: "500" }],
+              "display": ["2.25rem", { lineHeight: "2.5rem", letterSpacing: "-0.03em", fontWeight: "600" }],
+              "mono-data": ["0.8125rem", { lineHeight: "1.125rem", letterSpacing: "0em", fontWeight: "400" }],
+              "headline-sm": ["1rem", { lineHeight: "1.375rem", letterSpacing: "-0.015em", fontWeight: "600" }],
+              "body-md": ["0.875rem", { lineHeight: "1.25rem", letterSpacing: "-0.005em", fontWeight: "400" }],
+              "label-sm": ["0.75rem", { lineHeight: "1rem", letterSpacing: "0.01em", fontWeight: "500" }],
+              "headline-md": ["1.25rem", { lineHeight: "1.625rem", letterSpacing: "-0.02em", fontWeight: "600" }],
+              "headline-lg-mobile": ["1.375rem", { lineHeight: "1.75rem", letterSpacing: "-0.02em", fontWeight: "600" }]
+            }
+          }
+        }
+      };
+    </script>
   </head>
-  <body>
+  <body class="bg-background font-body-md text-on-surface">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

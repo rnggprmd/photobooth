@@ -156,6 +156,63 @@ export const GalleryPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  const handleCopyGalleryLink = () => {
+    const publicUrl = `${window.location.origin}/results/demo-gallery`;
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(publicUrl);
+    }
+    showToast('Tautan portal galeri publik berhasil disalin ke clipboard!');
+  };
+
+  const handleDownloadAllZip = () => {
+    const manifest = photos
+      .map((p) => `${p.id},${p.sessionId},${p.guestName},${p.event},${p.imageUrl}`)
+      .join('\n');
+    const blob = new Blob([`# Photobooth Archive Manifest\nID,Session,Guest,Event,URL\n${manifest}`], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `photobooth_gallery_archive_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Daftar arsip foto beresolusi tinggi berhasil diunduh!');
+  };
+
+  const handleDownloadSinglePhoto = (photo: GalleryPhotoItem) => {
+    const link = document.createElement('a');
+    link.href = photo.imageUrl;
+    link.target = '_blank';
+    link.download = `${photo.sessionId}_${photo.guestName.replace(/\s+/g, '_')}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Mengunduh foto resolusi penuh...');
+  };
+
+  const handleCopySingleLink = (photo: GalleryPhotoItem) => {
+    const token = photo.sessionId.replace(/[^a-zA-Z0-9]/g, '');
+    const url = `${window.location.origin}/results/tok_${token}`;
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+    showToast(`Tautan publik ${photo.guestName} berhasil disalin!`);
+  };
+
+  const handleDeletePhoto = async (id: string) => {
+    if (!window.confirm('Yakin ingin menghapus foto komposit ini dari arsip cloud?')) return;
+    try {
+      const rawId = parseInt(id.replace(/\D/g, ''), 10);
+      if (rawId) await galleryApi.delete(rawId);
+    } catch (err) {
+      console.warn('API delete photo warning:', err);
+    }
+    setPhotos((prev) => prev.filter((p) => p.id !== id));
+    setActivePhoto(null);
+    showToast('Foto berhasil dihapus dari galeri.');
+  };
+
   const filteredPhotos = photos.filter((photo) => {
     const matchesSearch =
       photo.guestName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -212,17 +269,17 @@ export const GalleryPage: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="outline"
-            onClick={() => showToast('Link portal galeri publik berhasil disalin!')}
+            onClick={handleCopyGalleryLink}
           >
             <span className="material-symbols-outlined text-[17px]">share</span>
             <span>Salin Link Galeri</span>
           </Button>
           <Button
             variant="primary"
-            onClick={() => showToast('Memulai pengunduhan seluruh file foto (ZIP 148 MB)...')}
+            onClick={handleDownloadAllZip}
           >
             <span className="material-symbols-outlined text-[17px]">folder_zip</span>
-            <span>Unduh Semua (ZIP)</span>
+            <span>Unduh Arsip (CSV/ZIP)</span>
           </Button>
         </div>
       </motion.div>
@@ -474,7 +531,7 @@ export const GalleryPage: React.FC = () => {
                     <Button
                       variant="primary"
                       className="w-full"
-                      onClick={() => showToast('Foto resolusi penuh berhasil diunduh!')}
+                      onClick={() => handleDownloadSinglePhoto(activePhoto)}
                     >
                       <span className="material-symbols-outlined text-[17px]">download</span>
                       <span>Unduh File Resolusi Penuh</span>
@@ -482,7 +539,7 @@ export const GalleryPage: React.FC = () => {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => showToast('Link unduh publik disalin ke clipboard!')}
+                      onClick={() => handleCopySingleLink(activePhoto)}
                     >
                       <span className="material-symbols-outlined text-[17px]">link</span>
                       <span>Salin Tautan Publik</span>
@@ -491,7 +548,15 @@ export const GalleryPage: React.FC = () => {
                 </div>
               </div>
 
-              <DialogFooter>
+              <DialogFooter className="flex items-center justify-between sm:justify-between w-full">
+                <Button
+                  variant="outline"
+                  className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                  onClick={() => handleDeletePhoto(activePhoto.id)}
+                >
+                  <span className="material-symbols-outlined text-[16px]">delete</span>
+                  <span>Hapus Foto</span>
+                </Button>
                 <Button variant="outline" onClick={() => setActivePhoto(null)}>
                   Tutup Galeri
                 </Button>

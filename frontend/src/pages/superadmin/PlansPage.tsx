@@ -485,42 +485,42 @@ export const SuperAdminPlansPage: React.FC = () => {
             </span>
           </div>
 
-          <div className="overflow-x-auto mt-4">
+          <div className="overflow-x-auto mt-4 rounded-xl border border-slate-200/80 overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="text-[11px] uppercase tracking-wider text-slate-500">
-                  <TableHead>Nama Paket</TableHead>
-                  <TableHead>Harga / Siklus</TableHead>
-                  <TableHead>Limit Event</TableHead>
-                  <TableHead>Limit Sesi Foto</TableHead>
-                  <TableHead>Cloud Storage</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                <TableRow className="bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                  <TableHead className="py-3.5 px-4">Nama Paket</TableHead>
+                  <TableHead className="py-3.5 px-4">Harga / Siklus</TableHead>
+                  <TableHead className="py-3.5 px-4">Limit Event</TableHead>
+                  <TableHead className="py-3.5 px-4">Limit Sesi Foto</TableHead>
+                  <TableHead className="py-3.5 px-4">Cloud Storage</TableHead>
+                  <TableHead className="py-3.5 px-4">Status</TableHead>
+                  <TableHead className="py-3.5 px-4 text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {masterPlans.map((plan) => (
-                  <TableRow key={plan.id} className="hover:bg-slate-50/80 transition-colors text-xs">
-                    <TableCell>
+                  <TableRow key={plan.id} className="hover:bg-slate-50/80 transition-colors text-xs divide-y divide-slate-100">
+                    <TableCell className="py-3.5 px-4">
                       <div className="font-bold text-slate-900">{plan.name}</div>
-                      <div className="text-[11px] text-slate-400 font-mono">slug: {plan.slug || plan.name.toLowerCase()}</div>
+                      <div className="text-[11px] text-slate-400 font-mono mt-0.5">slug: {plan.slug || plan.name.toLowerCase()}</div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900 font-mono">{formatRupiah(Number(plan.price) || 0)}</div>
-                      <div className="text-[11px] text-slate-500">per {plan.billing_period || 'bulan'}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">per {plan.billing_period || 'bulan'}</div>
                     </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-slate-700">{plan.max_events === 0 || plan.max_events > 500 ? 'Unlimited' : `${plan.max_events} Event`}</span>
+                    <TableCell className="py-3.5 px-4">
+                      <span className="font-mono text-slate-700 font-medium">{plan.max_events === 0 || plan.max_events > 500 ? 'Unlimited' : `${plan.max_events} Event`}</span>
                     </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-slate-700">{plan.max_sessions === 0 || plan.max_sessions > 50000 ? 'Unlimited' : `${(plan.max_sessions || 0).toLocaleString('id-ID')} Sesi`}</span>
+                    <TableCell className="py-3.5 px-4">
+                      <span className="font-mono text-slate-700 font-medium">{plan.max_sessions === 0 || plan.max_sessions > 50000 ? 'Unlimited' : `${(plan.max_sessions || 0).toLocaleString('id-ID')} Sesi`}</span>
                     </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-slate-700">
+                    <TableCell className="py-3.5 px-4">
+                      <span className="font-mono text-slate-700 font-medium">
                         {plan.max_storage_mb ? `${Math.round(plan.max_storage_mb / 1024)} GB` : '25 GB'}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3.5 px-4">
                       <button
                         type="button"
                         onClick={() => handleTogglePlanStatus(plan)}

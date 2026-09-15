@@ -11,7 +11,10 @@ import { fadeInUp, staggerContainer } from '../../lib/animations';
 import { businessApi } from '../../api/business';
 
 export const SettingsPage: React.FC = () => {
-  const { tenant } = useAuthStore();
+  const { user, tenant } = useAuthStore();
+  const isSuperAdmin = Boolean(
+    user?.roles?.some((r: any) => (typeof r === 'string' ? r === 'super_admin' : r.name === 'super_admin'))
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'hardware';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -146,15 +149,19 @@ export const SettingsPage: React.FC = () => {
       <motion.div variants={fadeInUp} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Finansial &amp; Akun</span>
+            <span>{isSuperAdmin ? 'Platform Root' : 'Finansial & Akun'}</span>
             <span className="text-slate-300">/</span>
-            <span className="text-slate-800 font-medium">Pengaturan &amp; Hardware</span>
+            <span className="text-slate-800 font-medium">
+              {isSuperAdmin ? 'Konfigurasi Platform & Fleet' : 'Pengaturan & Hardware'}
+            </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Pusat Pengaturan Studio &amp; Hardware
+            {isSuperAdmin ? 'Pusat Konfigurasi Platform & Fleet Hardware' : 'Pusat Pengaturan Studio & Hardware'}
           </h1>
           <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
-            Konfigurasikan armada printer DNP, kalibrasi kamera DSLR/mirrorless, profil identitas bisnis tenant, integrasi gateway QRIS, serta notifikasi WhatsApp.
+            {isSuperAdmin
+              ? 'Konfigurasikan armada printer DNP, kalibrasi terminal kamera, parameter profil tenant induk, dan integrasi notifikasi sistem.'
+              : 'Konfigurasikan armada printer DNP, kalibrasi kamera DSLR/mirrorless, profil identitas bisnis tenant, integrasi gateway QRIS, serta notifikasi WhatsApp.'}
           </p>
         </div>
       </motion.div>

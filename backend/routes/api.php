@@ -124,6 +124,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Transaction Management — UC-030
         Route::get('transactions', [TransactionController::class, 'index']);
+        Route::post('transactions', [TransactionController::class, 'store']);
         Route::get('transactions/{transaction}', [TransactionController::class, 'show']);
 
         // Gallery — UC-028

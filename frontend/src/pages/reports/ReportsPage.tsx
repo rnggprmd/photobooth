@@ -102,10 +102,6 @@ export const ReportsPage: React.FC = () => {
     }
   };
 
-  const handleExport = () => {
-    showToast('Laporan Operasional PDF & CSV berhasil diunduh');
-  };
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -165,6 +161,42 @@ export const ReportsPage: React.FC = () => {
           uptime: '99.7%',
           latency: 'Avg. 19ms',
         };
+
+  const handleExport = () => {
+    const summaryRows = [
+      '# LAPORAN TELEMETRI & OPERASIONAL PHOTOBOOTH',
+      `Periode:,${timeRange === 'today' ? 'Hari Ini' : timeRange === '7d' ? '7 Hari Terakhir' : '30 Hari Terakhir'}`,
+      `Total Sesi:,${metrics.sessions}`,
+      `Sesi On-site:,${metrics.onsite}`,
+      `Sesi Online / Cloud:,${metrics.online}`,
+      `Konsumsi Kertas:,${metrics.paper} lembar`,
+      `Sisa Stok Media Kertas:,${metrics.paperStock} lembar (${metrics.paperSafe})`,
+      `Utilisasi Kuota:,${metrics.quotaUsed} / ${metrics.quotaTotal} (${metrics.quotaPercent}%)`,
+      `Hardware Uptime:,${metrics.uptime}`,
+      `Rata-rata Latensi:,${metrics.latency}`,
+      '',
+      '# DISTRIBUSI VOLUME PER JAM',
+      'Jam,Sesi On-Site,Sesi Online,Total Sesi',
+      ...hourlyVolumeData.map((h) => `"${h.time}",${h.onsite},${h.online},${h.total}`),
+      '',
+      '# LOG INSIDEN & TINDAKAN OPERASIONAL',
+      'ID,Waktu,Lokasi,Operator,Kategori,Status,Tindakan',
+      ...filteredIncidents.map(
+        (i) =>
+          `"${i.id}","${i.waktu}","${i.lokasi}","${i.operator}","${i.kategori}","${i.status}","${i.tindakan.replace(/"/g, '""')}"`
+      ),
+    ];
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + summaryRows.join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `laporan_operasional_${timeRange}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Laporan Operasional (${timeRange}) berhasil diekspor ke CSV!`);
+  };
 
   return (
     <div className="flex flex-col w-full space-y-6">

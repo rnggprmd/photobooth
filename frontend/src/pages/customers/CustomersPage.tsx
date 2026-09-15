@@ -56,6 +56,7 @@ export const CustomersPage: React.FC = () => {
   const [operatorSearch, setOperatorSearch] = useState('');
   const [guestSearch, setGuestSearch] = useState('');
   const [selectedEventFilter, setSelectedEventFilter] = useState('all');
+  const [operatorStatusFilter, setOperatorStatusFilter] = useState<'all' | 'on_duty' | 'standby' | 'off_duty'>('all');
   const [isAddOperatorOpen, setIsAddOperatorOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -324,12 +325,33 @@ export const CustomersPage: React.FC = () => {
     showToast('Database tamu berhasil diekspor ke format CSV!');
   };
 
-  const filteredOperators = operators.filter(
-    (op) =>
+  const handleToggleOperatorStatus = (id: string, newStatus: Operator['status']) => {
+    setOperators((prev) =>
+      prev.map((op) => {
+        if (op.id === id) {
+          const statusLabel =
+            newStatus === 'on_duty'
+              ? 'Live On-Duty'
+              : newStatus === 'standby'
+              ? 'Standby'
+              : 'Off-Duty';
+          showToast(`Status shift ${op.name} diubah menjadi ${statusLabel}`);
+          return { ...op, status: newStatus };
+        }
+        return op;
+      })
+    );
+  };
+
+  const filteredOperators = operators.filter((op) => {
+    const matchesSearch =
       op.name.toLowerCase().includes(operatorSearch.toLowerCase()) ||
       op.role.toLowerCase().includes(operatorSearch.toLowerCase()) ||
-      op.assignedEvent.toLowerCase().includes(operatorSearch.toLowerCase())
-  );
+      op.assignedEvent.toLowerCase().includes(operatorSearch.toLowerCase());
+    if (!matchesSearch) return false;
+    if (operatorStatusFilter !== 'all' && op.status !== operatorStatusFilter) return false;
+    return true;
+  });
 
   const filteredLeads = customerLeads.filter((c) => {
     const matchesSearch =
@@ -506,14 +528,52 @@ export const CustomersPage: React.FC = () => {
                 className="pl-9 h-9 text-xs"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-medium">Status Shift:</span>
-              <Badge variant="tertiary" className="cursor-pointer">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-slate-500 font-medium mr-1">Status Shift:</span>
+              <button
+                type="button"
+                onClick={() => setOperatorStatusFilter('all')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  operatorStatusFilter === 'all'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Semua ({operators.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOperatorStatusFilter('on_duty')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  operatorStatusFilter === 'on_duty'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                }`}
+              >
                 On-Duty ({operators.filter((o) => o.status === 'on_duty').length})
-              </Badge>
-              <Badge variant="outline" className="cursor-pointer">
+              </button>
+              <button
+                type="button"
+                onClick={() => setOperatorStatusFilter('standby')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  operatorStatusFilter === 'standby'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100'
+                }`}
+              >
                 Standby ({operators.filter((o) => o.status === 'standby').length})
-              </Badge>
+              </button>
+              <button
+                type="button"
+                onClick={() => setOperatorStatusFilter('off_duty')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                  operatorStatusFilter === 'off_duty'
+                    ? 'bg-slate-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+              >
+                Off-Duty ({operators.filter((o) => o.status === 'off_duty').length})
+              </button>
             </div>
           </div>
 
@@ -596,6 +656,20 @@ export const CustomersPage: React.FC = () => {
                       <span>WhatsApp</span>
                       <span className="material-symbols-outlined text-[13px]">open_in_new</span>
                     </a>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100">
+                    <span className="text-slate-500 font-medium">Ubah Status:</span>
+                    <select
+                      value={op.status}
+                      onChange={(e) => handleToggleOperatorStatus(op.id, e.target.value as any)}
+                      aria-label={`Ubah status shift ${op.name}`}
+                      className="h-7 px-2 text-[11px] rounded-md bg-slate-50 border border-slate-200 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-900"
+                    >
+                      <option value="on_duty">🟢 Live On-Duty</option>
+                      <option value="standby">🟡 Standby</option>
+                      <option value="off_duty">⚪ Off-Duty</option>
+                    </select>
                   </div>
                 </CardContent>
               </Card>

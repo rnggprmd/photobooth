@@ -232,7 +232,14 @@ export const SessionsPage: React.FC = () => {
   };
 
   const handleResendWhatsapp = (sessionId: string, phone: string) => {
-    showToast(`Link galeri ${sessionId} berhasil dikirim ulang ke WhatsApp ${phone}!`);
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const cleanToken = sessionId.replace(/[^a-zA-Z0-9]/g, '');
+    const url = `${window.location.origin}/results/tok_${cleanToken}`;
+    const text = encodeURIComponent(`Halo! Berikut tautan foto photobooth Anda dari event: ${url}`);
+    if (cleanPhone) {
+      window.open(`https://wa.me/${cleanPhone}?text=${text}`, '_blank');
+    }
+    showToast(`Membuka WhatsApp untuk mengirim foto ${sessionId} ke ${phone}...`);
   };
 
   const filteredSessions = sessions.filter((s) => {
@@ -654,7 +661,14 @@ export const SessionsPage: React.FC = () => {
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => showToast('Link unduh berhasil disalin!')}
+                      onClick={() => {
+                        const cleanToken = selectedSession.id.replace(/[^a-zA-Z0-9]/g, '');
+                        const url = `${window.location.origin}/results/tok_${cleanToken}`;
+                        if (navigator?.clipboard) {
+                          navigator.clipboard.writeText(url);
+                        }
+                        showToast('Link unduh foto berhasil disalin ke clipboard!');
+                      }}
                     >
                       Salin Link
                     </Button>

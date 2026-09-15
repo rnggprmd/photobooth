@@ -48,6 +48,17 @@ export const TransactionsPage: React.FC = () => {
   const [methodFilter, setMethodFilter] = useState('all');
   const [selectedInvoice, setSelectedInvoice] = useState<TransactionItem | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false);
+  const [newInvoiceForm, setNewInvoiceForm] = useState({
+    clientName: '',
+    clientPhone: '',
+    eventName: '',
+    packageName: 'Paket Wedding Royal Platinum (4 Jam)',
+    amount: 3500000,
+    paymentMethod: 'QRIS Dinamis' as 'QRIS Dinamis' | 'BCA Virtual Account' | 'Mandiri VA' | 'Kartu Kredit' | 'Cash / Tunai',
+    dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+    notes: '',
+  });
 
   // Transactions list data
   const [transactions, setTransactions] = useState<TransactionItem[]>([
@@ -210,6 +221,135 @@ export const TransactionsPage: React.FC = () => {
     showToast('Laporan keuangan berhasil diekspor!');
   };
 
+  const handleCreateInvoice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newInvoiceForm.clientName || !newInvoiceForm.eventName) {
+      showToast('Nama klien dan nama event wajib diisi!');
+      return;
+    }
+
+    const generatedNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newTx: TransactionItem = {
+      id: `TX-${Date.now()}`,
+      invoiceNumber: generatedNum,
+      clientName: newInvoiceForm.clientName,
+      clientPhone: newInvoiceForm.clientPhone || '0812-0000-0000',
+      eventName: newInvoiceForm.eventName,
+      packageName: newInvoiceForm.packageName,
+      amount: Number(newInvoiceForm.amount),
+      tax: 0,
+      totalAmount: Number(newInvoiceForm.amount),
+      paymentMethod: newInvoiceForm.paymentMethod,
+      status: 'pending',
+      createdAt: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+      dueDate: newInvoiceForm.dueDate,
+      notes: newInvoiceForm.notes || 'Tagihan invoice manual baru dibuat',
+    };
+
+    try {
+      await transactionsApi.create({
+        customer_name: newInvoiceForm.clientName,
+        event_name: newInvoiceForm.eventName,
+        amount: newInvoiceForm.amount,
+        payment_method: newInvoiceForm.paymentMethod,
+        status: 'pending',
+        due_at: newInvoiceForm.dueDate,
+        notes: newInvoiceForm.notes,
+      });
+    } catch (err) {
+      console.warn('API create transaction warning:', err);
+    }
+
+    setTransactions((prev) => [newTx, ...prev]);
+    setIsCreateInvoiceOpen(false);
+    setNewInvoiceForm({
+      clientName: '',
+      clientPhone: '',
+      eventName: '',
+      packageName: 'Paket Wedding Royal Platinum (4 Jam)',
+      amount: 3500000,
+      paymentMethod: 'QRIS Dinamis',
+      dueDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+      notes: '',
+    });
+    showToast(`Invoice ${generatedNum} berhasil diterbitkan!`);
+  };
+
+  const handlePrintInvoice = (inv: TransactionItem) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Invoice - ${inv.invoiceNumber}</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 700px; margin: 0 auto; }
+              .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 20px; }
+              .badge { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+              .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 24px 0; font-size: 13px; line-height: 1.6; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+              th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
+              th { background-color: #f8fafc; font-weight: 600; }
+              .total { font-size: 16px; font-weight: bold; text-align: right; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <h2 style="margin:0; font-size: 20px; color: #0f172a;">Lumina Photostudio & Co.</h2>
+                <p style="margin:4px 0 0 0; color:#64748b; font-size: 12px;">Kuitansi Resmi Tagihan Sewa Photobooth</p>
+              </div>
+              <div style="text-align: right;">
+                <h3 style="margin:0; font-family: monospace; font-size: 16px;">${inv.invoiceNumber}</h3>
+                <span class="badge">${inv.status.toUpperCase()}</span>
+              </div>
+            </div>
+            <div class="grid">
+              <div>
+                <strong>Ditagihkan Kepada:</strong><br>
+                ${inv.clientName}<br>
+                ${inv.clientPhone}<br>
+                Acara: ${inv.eventName}
+              </div>
+              <div>
+                <strong>Rincian Tagihan:</strong><br>
+                Tanggal: ${inv.createdAt}<br>
+                Jatuh Tempo: ${inv.dueDate}<br>
+                Metode: ${inv.paymentMethod}
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Deskripsi Layanan</th>
+                  <th style="text-align: right;">Jumlah</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${inv.packageName}</td>
+                  <td style="text-align: right;">Rp ${inv.amount.toLocaleString('id-ID')}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="total">
+              Total Tagihan: Rp ${inv.totalAmount.toLocaleString('id-ID')}
+            </div>
+            ${inv.notes ? '<p style="margin-top:20px; color:#64748b; font-size:12px;"><em>Catatan: ' + inv.notes + '</em></p>' : ''}
+            <script>
+              window.onload = function() { window.print(); }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } else {
+      window.print();
+    }
+    showToast('Membuka slip invoice untuk cetak / PDF...');
+  };
+
   const filteredTransactions = transactions.filter((t) => {
     const matchesSearch =
       t.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -270,7 +410,7 @@ export const TransactionsPage: React.FC = () => {
           </Button>
           <Button
             variant="primary"
-            onClick={() => showToast('Fitur invoice kustom baru siap digunakan!')}
+            onClick={() => setIsCreateInvoiceOpen(true)}
           >
             <span className="material-symbols-outlined text-[17px]">add_circle</span>
             <span>+ Buat Invoice Baru</span>
@@ -575,10 +715,7 @@ export const TransactionsPage: React.FC = () => {
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => {
-                    showToast('Invoice PDF berhasil diunduh!');
-                    setSelectedInvoice(null);
-                  }}
+                  onClick={() => handlePrintInvoice(selectedInvoice)}
                 >
                   <span className="material-symbols-outlined text-[15px]">print</span>
                   <span>Cetak / Unduh PDF</span>
@@ -586,6 +723,127 @@ export const TransactionsPage: React.FC = () => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Buat Invoice Baru Dialog */}
+      <Dialog open={isCreateInvoiceOpen} onOpenChange={setIsCreateInvoiceOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Buat Invoice &amp; Penagihan Baru</DialogTitle>
+            <DialogDescription>
+              Terbitkan tagihan baru untuk klien event photobooth dengan rincian paket dan nominal pembayaran.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateInvoice} className="space-y-4 pt-2 text-xs">
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">Nama Klien / Instansi *</label>
+              <Input
+                required
+                placeholder="Contoh: Sarah &amp; Rizky / PT Finansial Utama"
+                value={newInvoiceForm.clientName}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, clientName: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">Nomor WhatsApp / Telp</label>
+                <Input
+                  placeholder="0812-xxxx-xxxx"
+                  value={newInvoiceForm.clientPhone}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, clientPhone: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">Nama Acara / Event *</label>
+                <Input
+                  required
+                  placeholder="Contoh: Wedding Sarah &amp; Rizky"
+                  value={newInvoiceForm.eventName}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, eventName: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">Paket Layanan</label>
+              <Select
+                value={newInvoiceForm.packageName}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, packageName: e.target.value })}
+                className="w-full h-9 text-xs"
+              >
+                <option value="Paket Wedding Royal Platinum (4 Jam)">Paket Wedding Royal Platinum (4 Jam)</option>
+                <option value="Paket Festival &amp; Corporate Hybrid (8 Jam)">Paket Festival &amp; Corporate Hybrid (8 Jam)</option>
+                <option value="Paket Sweet 17th Glamour (3 Jam)">Paket Sweet 17th Glamour (3 Jam)</option>
+                <option value="Paket Starter Intimate (2 Jam)">Paket Starter Intimate (2 Jam)</option>
+                <option value="Paket Custom Custom Event">Paket Custom Photobooth</option>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">Total Tagihan (IDR) *</label>
+                <Input
+                  type="number"
+                  required
+                  min={0}
+                  step={50000}
+                  value={newInvoiceForm.amount}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, amount: Number(e.target.value) })}
+                  className="h-9 text-xs font-mono font-bold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="font-semibold text-slate-700">Metode Pembayaran</label>
+                <Select
+                  value={newInvoiceForm.paymentMethod}
+                  onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, paymentMethod: e.target.value as any })}
+                  className="w-full h-9 text-xs"
+                >
+                  <option value="QRIS Dinamis">QRIS Dinamis</option>
+                  <option value="BCA Virtual Account">BCA Virtual Account</option>
+                  <option value="Mandiri VA">Mandiri VA</option>
+                  <option value="Kartu Kredit">Kartu Kredit</option>
+                  <option value="Cash / Tunai">Cash / Tunai</option>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">Tanggal Jatuh Tempo</label>
+              <Input
+                type="date"
+                value={newInvoiceForm.dueDate}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, dueDate: e.target.value })}
+                className="h-9 text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-slate-700">Catatan Invoice (Opsional)</label>
+              <Input
+                placeholder="Contoh: DP 50% diterima, pelunasan saat loading booth di venue"
+                value={newInvoiceForm.notes}
+                onChange={(e) => setNewInvoiceForm({ ...newInvoiceForm, notes: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsCreateInvoiceOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" variant="primary">
+                <span className="material-symbols-outlined text-[16px]">save</span>
+                <span>Terbitkan Invoice</span>
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </motion.div>

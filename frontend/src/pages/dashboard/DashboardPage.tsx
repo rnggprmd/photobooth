@@ -18,7 +18,48 @@ export const DashboardPage: React.FC = () => {
   const [showTelemetryAlert, setShowTelemetryAlert] = useState(true);
   const [eventTab, setEventTab] = useState<'all' | 'onsite' | 'hybrid'>('all');
   const [searchSession, setSearchSession] = useState('');
+  const [selectedEventFilter, setSelectedEventFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleSendNotification = (eventName: string) => {
+    showToast(`Pesan broadcast & instruksi operator berhasil dikirim ke armada "${eventName}"!`);
+  };
+
+  const handleCopyQr = (slug: string) => {
+    const url = `${window.location.origin}/results/${slug}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).catch(() => {});
+    }
+    showToast(`Tautan portal live berhasil disalin: ${url}`);
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['ID_Sesi,Waktu,Event,Lokasi,Mode,Template,Captures,Output,Delivery'];
+    const rows = filteredSessions.map(
+      (s) =>
+        `"${s.id}","${s.time}","${s.event}","${s.location}","${s.mode}","${s.template}","${s.captures}","${s.printed}","${s.delivery}"`
+    );
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `photobooth_sessions_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Seluruh data sesi berhasil diekspor ke format CSV!');
+  };
+
+  const handleReprintSession = (sessionId: string) => {
+    showToast(`Perintah cetak ulang untuk sesi ${sessionId} dikirim ke printer DNP DS620!`);
+  };
 
   // Sample real-time sessions data aligned with BRD & PRD
   const [sessions, setSessions] = useState([
@@ -103,15 +144,27 @@ export const DashboardPage: React.FC = () => {
       .catch((err) => console.warn('Dashboard fetch warning:', err));
   }, []);
 
-  const filteredSessions = sessions.filter(
-    (s) =>
+  const filteredSessions = sessions.filter((s) => {
+    const matchesSearch =
       s.id.toLowerCase().includes(searchSession.toLowerCase()) ||
       s.event.toLowerCase().includes(searchSession.toLowerCase()) ||
-      s.template.toLowerCase().includes(searchSession.toLowerCase())
-  );
+      s.template.toLowerCase().includes(searchSession.toLowerCase());
+    if (!matchesSearch) return false;
+    if (selectedEventFilter !== 'all' && !s.event.toLowerCase().includes(selectedEventFilter.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="flex flex-col w-full space-y-6">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-900 shadow-lg animate-in fade-in slide-in-from-bottom-2">
+          <span className="material-symbols-outlined text-[17px] text-emerald-600">check_circle</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
       {/* Operational Alert / Hardware Health Ribbon */}
       {showTelemetryAlert && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
@@ -464,7 +517,10 @@ export const DashboardPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200 transition-colors">
+                    <button
+                      onClick={() => handleSendNotification('Wedding of Kevin & Astrid')}
+                      className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200 transition-colors cursor-pointer"
+                    >
                       Kirim Notifikasi
                     </button>
                     <Link
@@ -549,7 +605,10 @@ export const DashboardPage: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200 transition-colors">
+                    <button
+                      onClick={() => handleCopyQr('ts26')}
+                      className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200 transition-colors cursor-pointer"
+                    >
                       Salin QR
                     </button>
                     <Link
@@ -688,16 +747,30 @@ export const DashboardPage: React.FC = () => {
                 type="text"
               />
             </div>
-            <select className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 text-xs border border-slate-200 shadow-xs focus:outline-none">
-              <option>Semua Event</option>
-              <option>Wedding Kevin &amp; Astrid</option>
-              <option>Tech Summit 2026</option>
+            <select
+              value={selectedEventFilter}
+              onChange={(e) => setSelectedEventFilter(e.target.value)}
+              className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 text-xs border border-slate-200 shadow-xs focus:outline-none cursor-pointer"
+            >
+              <option value="all">Semua Event</option>
+              <option value="Kevin">Wedding Kevin &amp; Astrid</option>
+              <option value="Tech Summit">Tech Summit 2026</option>
             </select>
-            <button className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium border border-slate-200 shadow-xs flex items-center gap-1">
+            <button
+              onClick={() => {
+                setSelectedEventFilter('all');
+                setSearchSession('');
+                showToast('Filter sesi direset.');
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium border border-slate-200 shadow-xs flex items-center gap-1 cursor-pointer"
+            >
               <span className="material-symbols-outlined text-[15px]">tune</span>
-              <span>Filter</span>
+              <span>Reset</span>
             </button>
-            <button className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium border border-slate-200 shadow-xs flex items-center gap-1">
+            <button
+              onClick={handleExportCsv}
+              className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium border border-slate-200 shadow-xs flex items-center gap-1 cursor-pointer"
+            >
               <span className="material-symbols-outlined text-[15px]">file_download</span>
               <span>Ekspor CSV</span>
             </button>
@@ -784,7 +857,8 @@ export const DashboardPage: React.FC = () => {
                           <span className="material-symbols-outlined text-[17px]">link</span>
                         </Link>
                         <button
-                          className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                          onClick={() => handleReprintSession(row.id)}
+                          className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                           title="Cetak Ulang"
                         >
                           <span className="material-symbols-outlined text-[17px]">print</span>
@@ -805,15 +879,32 @@ export const DashboardPage: React.FC = () => {
               <span className="font-mono">WebSocket: 24ms</span>
             </div>
             <div className="flex items-center gap-1">
-              <button className="px-2.5 py-1 rounded bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs disabled:opacity-50" disabled>
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-2.5 py-1 rounded bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs disabled:opacity-50 cursor-pointer"
+              >
                 Sebelumnya
               </button>
-              <span className="px-2 py-1 font-mono text-slate-900 font-semibold">1</span>
-              <button className="px-2 py-1 hover:bg-slate-200/60 rounded">2</button>
-              <button className="px-2 py-1 hover:bg-slate-200/60 rounded">3</button>
+              <span className="px-2 py-1 font-mono text-slate-900 font-semibold">{currentPage}</span>
+              <button
+                onClick={() => setCurrentPage(2)}
+                className={`px-2 py-1 rounded cursor-pointer ${currentPage === 2 ? 'font-bold text-slate-900 bg-slate-200' : 'hover:bg-slate-200/60'}`}
+              >
+                2
+              </button>
+              <button
+                onClick={() => setCurrentPage(3)}
+                className={`px-2 py-1 rounded cursor-pointer ${currentPage === 3 ? 'font-bold text-slate-900 bg-slate-200' : 'hover:bg-slate-200/60'}`}
+              >
+                3
+              </button>
               <span className="px-1 text-slate-400">...</span>
-              <button className="px-2 py-1 hover:bg-slate-200/60 rounded">72</button>
-              <button className="px-2.5 py-1 rounded bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs">
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(3, p + 1))}
+                disabled={currentPage === 3}
+                className="px-2.5 py-1 rounded bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs disabled:opacity-50 cursor-pointer"
+              >
                 Selanjutnya
               </button>
             </div>

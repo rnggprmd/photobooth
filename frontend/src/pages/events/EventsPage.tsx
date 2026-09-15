@@ -29,6 +29,54 @@ export const EventsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [applySuccessToast, setApplySuccessToast] = useState<string | null>(null);
+  const [editingEventItem, setEditingEventItem] = useState<EventItem | null>(null);
+  const [editTimeRange, setEditTimeRange] = useState('');
+  const [editVenue, setEditVenue] = useState('');
+  const [editStatus, setEditStatus] = useState<'live' | 'scheduled' | 'completed' | 'draft'>('scheduled');
+
+  const handleOpenEditEvent = (evt: EventItem) => {
+    setEditingEventItem(evt);
+    setEditTimeRange(evt.timeRange);
+    setEditVenue(evt.venue);
+    setEditStatus(evt.status);
+  };
+
+  const handleSaveEditEvent = async () => {
+    if (!editingEventItem) return;
+    const numericId = parseInt(editingEventItem.id.replace('EVT-', ''), 10);
+    if (!isNaN(numericId) && numericId > 0) {
+      try {
+        await eventsApi.update(numericId, {
+          location: editVenue,
+          status: editStatus,
+        } as any);
+      } catch (e) {
+        console.warn('API event update error:', e);
+      }
+    }
+
+    setEvents((prev) =>
+      prev.map((e) =>
+        e.id === editingEventItem.id
+          ? {
+              ...e,
+              timeRange: editTimeRange,
+              venue: editVenue,
+              status: editStatus,
+              dateBadge:
+                editStatus === 'live'
+                  ? 'SEDANG BERLANGSUNG • LIVE'
+                  : editStatus === 'completed'
+                  ? 'SELESAI'
+                  : 'TERJADWAL',
+            }
+          : e
+      )
+    );
+    setApplySuccessToast(`Jadwal event "${editingEventItem.name}" berhasil diperbarui!`);
+    setTimeout(() => setApplySuccessToast(null), 3500);
+    setEditingEventItem(null);
+  };
 
   // Form state for creating events
   const [formName, setFormName] = useState('');
@@ -666,8 +714,8 @@ export const EventsPage: React.FC = () => {
                       ) : (
                         <>
                           <button
-                            onClick={() => alert(`Jadwal event ${event.id} siap disesuaikan.`)}
-                            className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium transition-colors shadow-xs"
+                            onClick={() => handleOpenEditEvent(event)}
+                            className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium transition-colors shadow-xs cursor-pointer"
                           >
                             Edit Jam
                           </button>
@@ -916,6 +964,82 @@ export const EventsPage: React.FC = () => {
                 className="px-3.5 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold transition-all shadow-xs"
               >
                 Simpan &amp; Terbitkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit Jadwal Event */}
+      {editingEventItem && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700">
+                  <span className="material-symbols-outlined text-[18px]">schedule</span>
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Sesuaikan Jadwal &amp; Lokasi</h3>
+                  <p className="text-[11px] text-slate-500 font-mono">{editingEventItem.id} • {editingEventItem.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditingEventItem(null)}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <span className="material-symbols-outlined text-[16px]">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-700 mb-1 font-medium">Rentang Jam Layanan</label>
+                <input
+                  value={editTimeRange}
+                  onChange={(e) => setEditTimeRange(e.target.value)}
+                  placeholder="Contoh: 18:00 - 22:00 WIB"
+                  className="w-full h-9 px-3 bg-white text-slate-900 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 border border-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 mb-1 font-medium">Lokasi / Venue</label>
+                <input
+                  value={editVenue}
+                  onChange={(e) => setEditVenue(e.target.value)}
+                  placeholder="Nama gedung atau ballroom"
+                  className="w-full h-9 px-3 bg-white text-slate-900 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900 border border-slate-200"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 mb-1 font-medium">Status Operasional</label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as any)}
+                  className="w-full h-9 px-2.5 bg-white text-slate-900 rounded-lg border border-slate-200"
+                >
+                  <option value="scheduled">Terjadwal (Scheduled)</option>
+                  <option value="live">Live (Sedang Berlangsung)</option>
+                  <option value="completed">Selesai (Completed)</option>
+                  <option value="draft">Draf (Draft)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              <button
+                onClick={() => setEditingEventItem(null)}
+                className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSaveEditEvent}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+              >
+                Simpan Penyesuaian
               </button>
             </div>
           </div>

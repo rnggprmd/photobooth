@@ -132,6 +132,35 @@ export const SuperAdminDashboardPage: React.FC = () => {
     tenantFilter === 'all' ? true : t.status === tenantFilter
   );
 
+  const handleExportPlatformData = () => {
+    const headers = ['Tenant Name,Slug,Status,Paket,Email Pemilik,Jumlah Kiosk,Terdaftar'];
+    const rows = recentTenants.map(
+      (t) => `"${t.name}","${t.slug}","${t.status}","${t.plan_name}","${t.owner_email}",${t.kiosks_count},"${t.created_at}"`
+    );
+    const summary = [
+      '# PLATFORM MASTER SUMMARY',
+      `Total Tenant,${metrics.total_tenants}`,
+      `Active Tenant,${metrics.active_tenants}`,
+      `SaaS MRR,${metrics.saas_mrr}`,
+      `Global Photo Sessions,${metrics.total_photo_sessions}`,
+      `Storage Used (GB),${metrics.storage_used_gb}`,
+      '',
+      '# TENANT DIRECTORY',
+      ...headers,
+      ...rows,
+    ].join('\n');
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + summary;
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `superadmin_platform_metrics_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Data master platform SaaS berhasil diekspor ke CSV!');
+  };
+
   return (
     <div className="flex flex-col w-full space-y-6">
       {/* Toast Notification */}
@@ -149,39 +178,6 @@ export const SuperAdminDashboardPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Platform Health Ribbon / SLA Telemetry */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100 flex-shrink-0">
-            <span className="material-symbols-outlined text-[18px]">dns</span>
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-0.5">
-            <span className="text-xs font-bold text-slate-900">Platform Core Telemetry:</span>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-medium">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Uptime API {metrics.api_uptime}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-700 font-medium">AWS S3 Jakarta (ap-southeast-3)</span>
-              <span className="text-slate-300">•</span>
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-[11px] font-medium border border-slate-200">
-                Latensi DB: 14ms
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
-          <button
-            onClick={() => showToast('Semua worker background dan antrean sinkronisasi sehat!')}
-            className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors border border-slate-200 flex items-center gap-1"
-          >
-            <span className="material-symbols-outlined text-[14px] text-emerald-600">verified</span>
-            <span>Status SLA</span>
-          </button>
-        </div>
-      </div>
-
       {loading && (
         <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
           <div className="bg-indigo-600 h-full w-1/3 animate-pulse"></div>
@@ -189,42 +185,42 @@ export const SuperAdminDashboardPage: React.FC = () => {
       )}
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-700 text-[11px] font-semibold tracking-wide uppercase">
-              Super Admin SaaS Console
-            </span>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span>Platform SaaS</span>
+            <span className="text-slate-300">/</span>
+            <span className="text-slate-800 font-medium">Root Console</span>
             <span className="text-slate-300">•</span>
-            <span className="font-mono text-xs text-slate-500">Root Node #ID-01</span>
+            <span className="text-slate-500">Halo, {user?.name || 'Super Admin'}</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Platform Master Dashboard — Halo, {user?.name || 'Super Admin'}
+            Platform Master Dashboard
           </h1>
-          <p className="text-xs text-slate-500">
-            Ringkasan performa ekosistem SaaS Photobooth: operasional tenant, pertumbuhan langganan (MRR), utilisasi storage cloud, dan telemetry armada kiosk se-Indonesia.
+          <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
+            Ringkasan performa ekosistem SaaS Photobooth: operasional tenant, pertumbuhan langganan (MRR), utilisasi storage cloud AWS S3, dan telemetri armada kiosk se-Indonesia.
           </p>
         </div>
 
         {/* Quick Actions */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
-            onClick={() => showToast('Laporan metrik SaaS (CSV) sedang diunduh...')}
-            className="px-3 py-2 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-all flex items-center gap-1.5 border border-slate-200 shadow-xs"
+            onClick={handleExportPlatformData}
+            className="px-3.5 py-2 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-all flex items-center gap-1.5 border border-slate-200 shadow-xs"
           >
             <span className="material-symbols-outlined text-[17px] text-slate-500">download</span>
             <span>Ekspor Data Platform</span>
           </button>
           <Link
             to="/superadmin/plans"
-            className="px-3 py-2 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-all flex items-center gap-1.5 border border-slate-200 shadow-xs"
+            className="px-3.5 py-2 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-all flex items-center gap-1.5 border border-slate-200 shadow-xs"
           >
             <span className="material-symbols-outlined text-[17px] text-slate-500">stars</span>
             <span>Master Paket SaaS</span>
           </Link>
           <Link
             to="/superadmin/tenants"
-            className="px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-all flex items-center gap-1.5 shadow-xs"
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-all flex items-center gap-1.5 shadow-xs"
           >
             <span className="material-symbols-outlined text-[17px]">domain_add</span>
             <span>+ Kelola Tenant</span>
@@ -232,170 +228,181 @@ export const SuperAdminDashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 5 KPI Metric Cards (PRD 8.20 / BRD 15) */}
+      {/* 5 KPI Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Card 1: Total Tenants */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Total Tenant / Studio
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">apartment</span>
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Total Tenant
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                <span className="material-symbols-outlined text-[17px]">apartment</span>
+              </div>
+            </div>
+            <div className="my-1.5">
+              <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
+                {metrics.total_tenants} <span className="text-xs font-normal text-slate-500 font-sans">Studio</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+                <span className="material-symbols-outlined text-[14px] text-emerald-600 font-semibold">trending_up</span>
+                <span className="font-semibold text-emerald-600">{metrics.tenant_growth_rate}</span>
+                <span>bln ini</span>
+              </div>
             </div>
           </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              {metrics.total_tenants} <span className="text-xs font-normal text-slate-500 font-sans">Studio</span>
-            </div>
-            <div className="flex items-center gap-1 mt-1 text-xs">
-              <span className="material-symbols-outlined text-[14px] text-emerald-600 font-semibold">trending_up</span>
-              <span className="font-semibold text-emerald-600">{metrics.tenant_growth_rate}</span>
-              <span className="text-slate-400">bulan ini</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-2.5 bg-slate-50 rounded-lg p-2 flex items-center justify-between border border-slate-100 text-[11px]">
-            <span className="font-medium text-emerald-700">{metrics.active_tenants} Aktif</span>
-            <span className="font-medium text-rose-600">{metrics.inactive_tenants} Suspended</span>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Operasional</span>
+            <span className="font-medium text-emerald-600">{metrics.active_tenants} Aktif <span className="text-slate-300">•</span> <span className="text-slate-400">{metrics.inactive_tenants} Off</span></span>
           </div>
         </div>
 
         {/* Card 2: SaaS Revenue (MRR) */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              SaaS MRR (Monthly)
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">payments</span>
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                SaaS MRR
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                <span className="material-symbols-outlined text-[17px]">payments</span>
+              </div>
+            </div>
+            <div className="my-1.5">
+              <div className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums truncate" title={formatRupiah(metrics.saas_mrr)}>
+                {formatRupiah(metrics.saas_mrr)}
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+                <span className="material-symbols-outlined text-[14px] text-emerald-600 font-semibold">trending_up</span>
+                <span className="font-semibold text-emerald-600">{metrics.mrr_growth_rate}</span>
+                <span>vs bln lalu</span>
+              </div>
             </div>
           </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              {formatRupiah(metrics.saas_mrr)}
-            </div>
-            <div className="flex items-center gap-1 mt-1 text-xs">
-              <span className="material-symbols-outlined text-[14px] text-emerald-600 font-semibold">trending_up</span>
-              <span className="font-semibold text-emerald-600">{metrics.mrr_growth_rate}</span>
-              <span className="text-slate-400">ARR ~ {formatRupiah(metrics.saas_arr)}</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-2.5 bg-slate-50 rounded-lg p-2 flex items-center justify-between border border-slate-100 text-[11px]">
-            <span className="font-medium text-slate-700">Langganan Aktif</span>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Langganan</span>
             <span className="font-mono font-semibold text-indigo-600">{metrics.active_subscriptions} Tenant</span>
           </div>
         </div>
 
         {/* Card 3: Total Photo Sessions */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Sesi Foto Global
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">photo_camera_front</span>
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Sesi Foto Global
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0">
+                <span className="material-symbols-outlined text-[17px]">photo_camera_front</span>
+              </div>
+            </div>
+            <div className="my-1.5">
+              <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
+                {metrics.total_photo_sessions.toLocaleString('id-ID')}
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+                <span className="material-symbols-outlined text-[14px] text-slate-400">event</span>
+                <span>{metrics.total_events_conducted} Event tercatat</span>
+              </div>
             </div>
           </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              {metrics.total_photo_sessions.toLocaleString('id-ID')}
-            </div>
-            <div className="flex items-center gap-1 mt-1 text-xs">
-              <span className="material-symbols-outlined text-[14px] text-indigo-600 font-semibold">event</span>
-              <span className="font-semibold text-slate-700">{metrics.total_events_conducted} Event</span>
-              <span className="text-slate-400">tercatat</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-2.5 bg-slate-50 rounded-lg p-2 flex items-center justify-between border border-slate-100 text-[11px]">
-            <span className="font-medium text-slate-700">Rata-rata / Hari</span>
-            <span className="font-mono text-slate-500">~ 495 Sesi</span>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Rata-rata</span>
+            <span className="font-mono font-medium text-slate-700">~495 Sesi / Hari</span>
           </div>
         </div>
 
         {/* Card 4: Active Kiosks Armada */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Terminal Kiosk Online
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">devices</span>
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Armada Kiosk
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 flex-shrink-0">
+                <span className="material-symbols-outlined text-[17px]">devices</span>
+              </div>
+            </div>
+            <div className="my-1.5">
+              <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
+                {metrics.active_kiosk_terminals} <span className="text-xs font-normal text-slate-500 font-sans">Unit</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span className="font-medium text-emerald-700">Semua Online</span>
+              </div>
             </div>
           </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              {metrics.active_kiosk_terminals} <span className="text-xs font-normal text-slate-500 font-sans">Kiosk</span>
-            </div>
-            <div className="flex items-center gap-1 mt-1 text-xs text-slate-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="font-medium text-emerald-700">Live Hardware Sync</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-2.5 bg-slate-50 rounded-lg p-2 flex items-center justify-between border border-slate-100 text-[11px]">
-            <span className="font-medium text-slate-700">Canon & DNP Sync</span>
-            <span className="font-mono text-slate-600">100% Ready</span>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span className="text-slate-500">Hardware</span>
+            <span className="font-semibold text-emerald-600">100% Siap</span>
           </div>
         </div>
 
         {/* Card 5: Platform Storage Usage */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Cloud Storage AWS S3
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">cloud_sync</span>
+        <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Storage Cloud
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
+                <span className="material-symbols-outlined text-[17px]">cloud_sync</span>
+              </div>
+            </div>
+            <div className="my-1.5">
+              <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
+                {metrics.storage_used_gb} <span className="text-xs font-normal text-slate-500 font-sans">GB</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
+                <span>Kuota: {metrics.storage_limit_gb} GB</span>
+              </div>
             </div>
           </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              {metrics.storage_used_gb} <span className="text-xs font-normal text-slate-500 font-sans">GB</span>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <div className="w-full flex items-center gap-2">
+              <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-indigo-600 h-full rounded-full"
+                  style={{ width: `${(metrics.storage_used_gb / metrics.storage_limit_gb) * 100}%` }}
+                ></div>
+              </div>
+              <span className="font-mono text-[11px] font-semibold text-slate-600">
+                {Math.round((metrics.storage_used_gb / metrics.storage_limit_gb) * 100)}%
+              </span>
             </div>
-            <div className="flex items-center gap-1 mt-1 text-xs text-slate-500">
-              <span>Kapasitas: {metrics.storage_limit_gb} GB</span>
-            </div>
-          </div>
-          <div className="mt-3 pt-2.5 bg-slate-50 rounded-lg p-2 flex items-center justify-between border border-slate-100 text-[11px]">
-            <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-indigo-600 h-full rounded-full"
-                style={{ width: `${(metrics.storage_used_gb / metrics.storage_limit_gb) * 100}%` }}
-              ></div>
-            </div>
-            <span className="ml-2 font-mono text-[10px] text-slate-500">
-              {Math.round((metrics.storage_used_gb / metrics.storage_limit_gb) * 100)}%
-            </span>
           </div>
         </div>
       </div>
 
       {/* Section 2: Expiry Alerts & Plan Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Expiry Alerts (PRD 8.20) */}
-        <div className="lg:col-span-2 p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-7 xl:col-span-8 p-6 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-amber-500"></span>
                 <h3 className="text-sm font-bold text-slate-900">
-                  Peringatan Langganan Akan Berakhir (Subscription Expiry &lt; 14 Hari)
+                  Peringatan Langganan Akan Berakhir (&lt; 14 Hari)
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold">
                 {expiringList.length} Tenant Perlu Perhatian
               </span>
             </div>
 
             <div className="divide-y divide-slate-100 mt-2">
               {expiringList.map((item) => (
-                <div key={item.id} className="py-3 flex items-center justify-between gap-4">
+                <div key={item.id} className="py-3.5 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 font-bold text-xs flex-shrink-0">
                       {item.days_left}d
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-slate-900">{item.tenant_name}</p>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-slate-500 mt-0.5">
                         Paket: <span className="font-medium text-slate-700">{item.plan_name}</span> • Berakhir: {item.ends_at}
                       </p>
                     </div>
@@ -404,14 +411,14 @@ export const SuperAdminDashboardPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => showToast(`Notifikasi perpanjangan berhasil dikirim ke ${item.contact_email}!`)}
-                      className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 shadow-2xs flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 shadow-2xs flex items-center gap-1.5 transition-colors"
                     >
                       <span className="material-symbols-outlined text-[15px] text-indigo-600">mail</span>
                       <span>Kirim Pengingat</span>
                     </button>
                     <Link
                       to="/superadmin/tenants"
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-medium text-white shadow-2xs"
+                      className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-medium text-white shadow-2xs transition-colors"
                     >
                       Perpanjang
                     </Link>
@@ -421,27 +428,26 @@ export const SuperAdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>Sistem auto-billing akan mengirim tagihan H-7 otomatis via email.</span>
-            <Link to="/superadmin/tenants" className="text-indigo-600 font-semibold hover:underline">
-              Lihat Seluruh Langganan →
-            </Link>
+          <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Sistem otomatis mengirim pengingat H-7 dan H-3 via WhatsApp & Email</span>
+            <span className="font-medium text-slate-700">Auto-Renew: Aktif</span>
           </div>
         </div>
 
-        {/* Plan Breakdown Card */}
-        <div className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between">
+        {/* Plan Distribution (PRD 8.20) */}
+        <div className="lg:col-span-5 xl:col-span-4 p-6 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900">Distribusi Paket SaaS</h3>
-              <Link to="/superadmin/plans" className="text-xs text-indigo-600 font-semibold hover:underline">
-                Kelola Paket
-              </Link>
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[18px] text-indigo-600">pie_chart</span>
+                <h3 className="text-sm font-bold text-slate-900">Distribusi Paket Langganan</h3>
+              </div>
+              <span className="text-[11px] text-slate-500">16 Aktif</span>
             </div>
 
-            <div className="space-y-3.5 mt-4">
+            <div className="space-y-4 mt-4">
               <div>
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-xs mb-1.5">
                   <span className="font-medium text-slate-800">Pro Business (Rp 899k/bln)</span>
                   <span className="font-semibold text-slate-900">9 Tenant (56%)</span>
                 </div>
@@ -451,7 +457,7 @@ export const SuperAdminDashboardPage: React.FC = () => {
               </div>
 
               <div>
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-xs mb-1.5">
                   <span className="font-medium text-slate-800">Enterprise Fleet (Rp 1.99jt/bln)</span>
                   <span className="font-semibold text-slate-900">4 Tenant (25%)</span>
                 </div>
@@ -461,7 +467,7 @@ export const SuperAdminDashboardPage: React.FC = () => {
               </div>
 
               <div>
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-xs mb-1.5">
                   <span className="font-medium text-slate-800">Starter Studio (Rp 499k/bln)</span>
                   <span className="font-semibold text-slate-900">3 Tenant (19%)</span>
                 </div>
@@ -472,43 +478,43 @@ export const SuperAdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 bg-slate-50 p-2.5 rounded-lg text-xs flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-slate-100 bg-slate-50 p-3 rounded-lg text-xs flex items-center justify-between">
             <span className="text-slate-600">Target MRR Kuartal Ini:</span>
-            <span className="font-bold text-slate-900">Rp 50.000.000</span>
+            <span className="font-bold text-slate-900 font-mono">Rp 50.000.000</span>
           </div>
         </div>
       </div>
 
       {/* Section 3: Recent Tenants Management Table */}
-      <div className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+      <div className="rounded-xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
+        <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100">
           <div>
             <h3 className="text-sm font-bold text-slate-900">Tenant / Studio Terbaru</h3>
-            <p className="text-xs text-slate-500">Daftar studio yang terdaftar dan sedang beroperasi di platform.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Daftar studio yang terdaftar dan sedang beroperasi di platform.</p>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="inline-flex p-0.5 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium">
+            <div className="inline-flex p-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium">
               <button
                 onClick={() => setTenantFilter('all')}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
-                  tenantFilter === 'all' ? 'bg-white shadow-2xs text-slate-900 font-semibold' : 'text-slate-600'
+                className={`px-3 py-1 rounded-md transition-colors ${
+                  tenantFilter === 'all' ? 'bg-white shadow-2xs text-slate-900 font-semibold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Semua ({recentTenants.length})
               </button>
               <button
                 onClick={() => setTenantFilter('active')}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
-                  tenantFilter === 'active' ? 'bg-white shadow-2xs text-slate-900 font-semibold' : 'text-slate-600'
+                className={`px-3 py-1 rounded-md transition-colors ${
+                  tenantFilter === 'active' ? 'bg-white shadow-2xs text-slate-900 font-semibold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Aktif
               </button>
               <button
                 onClick={() => setTenantFilter('suspended')}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
-                  tenantFilter === 'suspended' ? 'bg-white shadow-2xs text-slate-900 font-semibold' : 'text-slate-600'
+                className={`px-3 py-1 rounded-md transition-colors ${
+                  tenantFilter === 'suspended' ? 'bg-white shadow-2xs text-slate-900 font-semibold' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Suspended
@@ -517,9 +523,10 @@ export const SuperAdminDashboardPage: React.FC = () => {
 
             <Link
               to="/superadmin/tenants"
-              className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs"
+              className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1"
             >
-              Lihat Semua Tenant
+              <span>Lihat Semua Tenant</span>
+              <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
             </Link>
           </div>
         </div>
@@ -527,36 +534,38 @@ export const SuperAdminDashboardPage: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px]">
-                <th className="py-3 px-3 font-semibold">Nama Studio / Tenant</th>
-                <th className="py-3 px-3 font-semibold">Subdomain</th>
-                <th className="py-3 px-3 font-semibold">Paket Aktif</th>
-                <th className="py-3 px-3 font-semibold">Kiosk Aktif</th>
-                <th className="py-3 px-3 font-semibold">Status</th>
-                <th className="py-3 px-3 font-semibold text-right">Aksi</th>
+              <tr className="bg-slate-50/80 text-slate-500 uppercase tracking-wider text-[11px] font-semibold border-b border-slate-200">
+                <th className="py-3.5 px-4">Nama Studio / Tenant</th>
+                <th className="py-3.5 px-4">Subdomain Platform</th>
+                <th className="py-3.5 px-4">Paket Aktif</th>
+                <th className="py-3.5 px-4">Kiosk Aktif</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredTenants.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3 px-3">
+                  <td className="py-3.5 px-4">
                     <div className="font-semibold text-slate-900">{t.name}</div>
-                    <div className="text-[11px] text-slate-400">{t.owner_email}</div>
+                    <div className="text-[11px] text-slate-400 mt-0.5">{t.owner_email}</div>
                   </td>
-                  <td className="py-3 px-3 font-mono text-slate-600">
-                    {t.slug}.snapstudio.id
+                  <td className="py-3.5 px-4 font-mono text-slate-600">
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200/80 text-[11px]">
+                      {t.slug}.snapstudio.id
+                    </span>
                   </td>
-                  <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-800 font-medium text-[11px]">
+                  <td className="py-3.5 px-4">
+                    <span className="px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-800 font-medium text-[11px]">
                       {t.plan_name}
                     </span>
                   </td>
-                  <td className="py-3 px-3 font-mono text-slate-700">
+                  <td className="py-3.5 px-4 font-mono text-slate-700 font-medium">
                     {t.kiosks_count} Unit
                   </td>
-                  <td className="py-3 px-3">
+                  <td className="py-3.5 px-4">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
                         t.status === 'active'
                           ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : 'bg-rose-50 text-rose-700 border-rose-200'
@@ -570,10 +579,10 @@ export const SuperAdminDashboardPage: React.FC = () => {
                       {t.status === 'active' ? 'Active' : 'Suspended'}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3.5 px-4 text-right">
                     <Link
                       to="/superadmin/tenants"
-                      className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors"
                     >
                       Detail
                     </Link>

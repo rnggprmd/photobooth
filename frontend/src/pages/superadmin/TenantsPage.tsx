@@ -371,22 +371,22 @@ export const SuperAdminTenantsPage: React.FC = () => {
       </motion.div>
 
       {/* Filter & Search Bar */}
-      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
+      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs">
         <div className="relative flex-1 max-w-md">
-          <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-[17px]">search</span>
+          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama tenant, owner, email, atau domain..."
-            className="pl-9 h-9 text-xs"
+            placeholder="Cari nama tenant, owner, email, atau subdomain..."
+            className="pl-10 h-10 text-xs"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Select
             value={planFilter}
             onChange={(e) => setPlanFilter(e.target.value)}
-            className="w-44 h-9 text-xs"
+            className="w-44 h-10 text-xs"
           >
             <option value="all">Semua Paket</option>
             <option value="Starter Studio">Starter Studio</option>
@@ -397,7 +397,7 @@ export const SuperAdminTenantsPage: React.FC = () => {
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-36 h-9 text-xs"
+            className="w-36 h-10 text-xs"
           >
             <option value="all">Semua Status</option>
             <option value="active">Aktif</option>
@@ -410,30 +410,30 @@ export const SuperAdminTenantsPage: React.FC = () => {
       <motion.div variants={fadeInUp} className="rounded-xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50/80 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
-              <TableHead className="py-2.5 px-4">Tenant ID &amp; Nama Brand</TableHead>
-              <TableHead className="py-2.5 px-4">Pemilik / Kontak</TableHead>
-              <TableHead className="py-2.5 px-4">Paket SaaS</TableHead>
-              <TableHead className="py-2.5 px-4">Kiosk Aktif</TableHead>
-              <TableHead className="py-2.5 px-4">Penyimpanan S3</TableHead>
-              <TableHead className="py-2.5 px-4 text-center">Status</TableHead>
-              <TableHead className="py-2.5 px-4 text-right">Aksi Kontrol</TableHead>
+            <TableRow className="bg-slate-50/80 text-slate-500 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
+              <TableHead className="py-3.5 px-4">Tenant ID &amp; Nama Brand</TableHead>
+              <TableHead className="py-3.5 px-4">Pemilik / Kontak</TableHead>
+              <TableHead className="py-3.5 px-4">Paket SaaS</TableHead>
+              <TableHead className="py-3.5 px-4">Kiosk Aktif</TableHead>
+              <TableHead className="py-3.5 px-4">Penyimpanan S3</TableHead>
+              <TableHead className="py-3.5 px-4 text-center">Status</TableHead>
+              <TableHead className="py-3.5 px-4 text-right">Aksi Kontrol</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="text-xs divide-y divide-slate-100">
             {filteredTenants.map((t) => (
               <TableRow key={t.id} className="hover:bg-slate-50/70 transition-colors">
-                <TableCell className="py-3 px-4">
+                <TableCell className="py-3.5 px-4">
                   <div className="font-bold text-slate-900">{t.name}</div>
                   <div className="font-mono text-[11px] text-indigo-600">{t.subdomain}</div>
                 </TableCell>
 
-                <TableCell className="py-3 px-4">
+                <TableCell className="py-3.5 px-4">
                   <div className="font-medium text-slate-900">{t.ownerName}</div>
                   <div className="font-mono text-[11px] text-slate-500">{t.ownerEmail}</div>
                 </TableCell>
 
-                <TableCell className="py-3 px-4">
+                <TableCell className="py-3.5 px-4">
                   <Badge
                     variant={
                       t.plan === 'Enterprise Fleet'
@@ -447,11 +447,11 @@ export const SuperAdminTenantsPage: React.FC = () => {
                   </Badge>
                 </TableCell>
 
-                <TableCell className="py-3 px-4 font-mono text-slate-900 font-semibold">
+                <TableCell className="py-3.5 px-4 font-mono text-slate-900 font-semibold">
                   {t.activeKiosks} / {t.maxKiosks} Unit
                 </TableCell>
 
-                <TableCell className="py-3 px-4">
+                <TableCell className="py-3.5 px-4">
                   <div className="font-mono text-[11px] text-slate-800">
                     {(t.storageMb / 1024).toFixed(1)} GB / {(t.maxStorageMb / 1024).toFixed(0)} GB
                   </div>
@@ -463,13 +463,13 @@ export const SuperAdminTenantsPage: React.FC = () => {
                   </div>
                 </TableCell>
 
-                <TableCell className="py-3 px-4 text-center">
+                <TableCell className="py-3.5 px-4 text-center">
                   <Badge variant={t.status === 'active' ? 'success' : 'destructive'}>
                     {t.status === 'active' ? 'Aktif' : 'Suspended'}
                   </Badge>
                 </TableCell>
 
-                <TableCell className="py-3 px-4 text-right">
+                <TableCell className="py-3.5 px-4 text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <Button
                       variant="outline"

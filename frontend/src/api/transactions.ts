@@ -10,6 +10,10 @@ export const transactionsApi = {
     const res = await apiClient.get<ApiResponse<any>>(`/transactions/${id}`);
     return res.data;
   },
+  create: async (data: any): Promise<ApiResponse<any>> => {
+    const res = await apiClient.post<ApiResponse<any>>('/transactions', data);
+    return res.data;
+  },
 };
 
 export default transactionsApi;

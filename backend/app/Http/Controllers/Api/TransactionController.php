@@ -52,4 +52,40 @@ class TransactionController extends Controller
             'data'    => $transaction,
         ]);
     }
+
+    /**
+     * Store a newly created transaction / invoice.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'customer_name'  => 'nullable|string|max:255',
+            'event_name'     => 'nullable|string|max:255',
+            'amount'         => 'required|numeric|min:0',
+            'payment_method' => 'nullable|string',
+            'status'         => 'nullable|string|in:paid,pending,refunded',
+            'due_at'         => 'nullable|string',
+            'notes'          => 'nullable|string',
+        ]);
+
+        $invoiceNumber = 'INV-' . date('Y') . '-' . strtoupper(substr(uniqid(), -4));
+
+        $transaction = Transaction::create([
+            'tenant_id'        => auth()->user()->tenant_id ?? 1,
+            'type'             => 'invoice',
+            'invoice_number'   => $invoiceNumber,
+            'amount'           => $validated['amount'],
+            'currency'         => 'IDR',
+            'status'           => $validated['status'] ?? 'pending',
+            'transaction_date' => now(),
+            'due_at'           => !empty($validated['due_at']) ? $validated['due_at'] : now()->addDays(7),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaction created successfully',
+            'data'    => $transaction,
+        ], 201);
+    }
 }
+

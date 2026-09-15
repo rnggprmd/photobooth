@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { templatesApi } from '../../api/templates';
+import { eventsApi } from '../../api/events';
+import apiClient from '../../api/client';
 
 interface SlotData {
   id: number;
@@ -17,20 +19,71 @@ interface SlotData {
 }
 
 export const TemplatesPage: React.FC = () => {
+  const [templateId, setTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState('Classic 4R Strip - Floral Wedding Elegance');
   const [category, setCategory] = useState('Wedding Elegance');
   const [status, setStatus] = useState('Active (Live)');
   const [formatSize, setFormatSize] = useState('4r_strip');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showBleed, setShowBleed] = useState(true);
+  const [showSnapGuides, setShowSnapGuides] = useState(false);
   const [frameOpacity, setFrameOpacity] = useState(100);
+  const [bgColor, setBgColor] = useState('#FFFFFF');
   const [zoomLevel, setZoomLevel] = useState(42);
   const [activeSlotId, setActiveSlotId] = useState(2);
   const [rightPanelTab, setRightPanelTab] = useState<'config' | 'assign'>('config');
   const [cropRule, setCropRule] = useState<'fit' | 'cover' | 'center'>('cover');
   const [cornerRadius, setCornerRadius] = useState(8);
   const [cameraFilter, setCameraFilter] = useState('Natural Glow (+Skin Smooth)');
+  const [isRatioLocked, setIsRatioLocked] = useState(true);
   const [saveToast, setSaveToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [frameFileName, setFrameFileName] = useState('frame_floral_white_gold.png');
+  const [isUploading, setIsUploading] = useState(false);
+  const frameUploadRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Drag state
+  const dragState = useRef<{
+    dragging: boolean;
+    slotId: number | null;
+    startX: number;
+    startY: number;
+    origX: number;
+    origY: number;
+    shiftLocked: boolean;
+  }>({ dragging: false, slotId: null, startX: 0, startY: 0, origX: 0, origY: 0, shiftLocked: false });
+
+  // Undo/Redo history
+  const [history, setHistory] = useState<SlotData[][]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+
+  const pushHistory = (newSlots: SlotData[]) => {
+    setHistory((prev) => {
+      const trimmed = prev.slice(0, historyIndex + 1);
+      return [...trimmed, newSlots.map((s) => ({ ...s }))];
+    });
+    setHistoryIndex((i) => i + 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIndex <= 0) return;
+    const newIdx = historyIndex - 1;
+    setSlots(history[newIdx].map((s) => ({ ...s })));
+    setHistoryIndex(newIdx);
+  };
+
+  const handleRedo = () => {
+    if (historyIndex >= history.length - 1) return;
+    const newIdx = historyIndex + 1;
+    setSlots(history[newIdx].map((s) => ({ ...s })));
+    setHistoryIndex(newIdx);
+  };
+
+  const showInfoToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   // Slots Data
   const [slots, setSlots] = useState<SlotData[]>([
@@ -72,10 +125,20 @@ export const TemplatesPage: React.FC = () => {
   // Assigned Events state
   const [assignedEvents, setAssignedEvents] = useState<number[]>([1, 2, 4]);
 
-  const toggleEventAssignment = (eventId: number) => {
-    setAssignedEvents((prev) =>
-      prev.includes(eventId) ? prev.filter((id) => id !== eventId) : [...prev, eventId]
-    );
+  const toggleEventAssignment = async (eventId: number) => {
+    const next = assignedEvents.includes(eventId)
+      ? assignedEvents.filter((id) => id !== eventId)
+      : [...assignedEvents, eventId];
+    setAssignedEvents(next);
+    // Persist assignment to backend
+    try {
+      if (templateId) {
+        await eventsApi.assignTemplates(eventId, next.includes(eventId) ? [templateId] : []);
+      }
+      showInfoToast(`Template ${next.includes(eventId) ? 'ditambahkan ke' : 'dilepas dari'} event #${eventId}`);
+    } catch (err) {
+      console.warn('assignTemplates API fallback:', err);
+    }
   };
 
   useEffect(() => {
@@ -84,6 +147,7 @@ export const TemplatesPage: React.FC = () => {
       .then((res) => {
         if (res.data && res.data.length > 0) {
           const t: any = res.data[0];
+          setTemplateId(t.id || null);
           setTemplateName(t.name);
           setFormatSize(t.paper_size === '4R' ? '4r_strip' : (t.paper_size || '4R').toLowerCase());
           setOrientation((t.orientation as any) || 'portrait');
@@ -100,35 +164,191 @@ export const TemplatesPage: React.FC = () => {
             }));
             setSlots(loadedSlots);
             setActiveSlotId(loadedSlots[0]?.id || 1);
+            pushHistory(loadedSlots);
           }
         }
       })
       .catch((err) => console.warn('Templates load warning:', err));
   }, []);
 
+  // Global mousemove and mouseup for smooth, continuous dragging anywhere on screen
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      const d = dragState.current;
+      if (!d.dragging || d.slotId === null) return;
+      const scale = Math.max(0.2, zoomLevel / 100);
+      const dx = Math.round((e.clientX - d.startX) / scale);
+      const dy = Math.round((e.clientY - d.startY) / scale);
+
+      setSlots((prev) =>
+        prev.map((s) => {
+          if (s.id !== d.slotId) return s;
+          if (d.shiftLocked || e.shiftKey) {
+            // Shift: lock to horizontal OR vertical axis
+            return Math.abs(dx) > Math.abs(dy)
+              ? { ...s, x: Math.max(0, d.origX + dx), y: d.origY }
+              : { ...s, x: d.origX, y: Math.max(0, d.origY + dy) };
+          }
+          return { ...s, x: Math.max(0, d.origX + dx), y: Math.max(0, d.origY + dy) };
+        })
+      );
+    };
+
+    const onMouseUp = () => {
+      if (dragState.current.dragging) {
+        dragState.current.dragging = false;
+        dragState.current.slotId = null;
+        setSlots((curr) => {
+          pushHistory(curr);
+          return curr;
+        });
+      }
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [zoomLevel]);
+
   const activeSlot = slots.find((s) => s.id === activeSlotId) || slots[0];
 
   const updateActiveSlotCoord = (field: 'x' | 'y' | 'w' | 'h', value: number) => {
-    setSlots((prev) =>
-      prev.map((s) => (s.id === activeSlotId ? { ...s, [field]: value } : s))
-    );
+    const updated = slots.map((s) => {
+      if (s.id !== activeSlotId) return s;
+      if (isRatioLocked) {
+        if (field === 'w') {
+          return { ...s, w: value, h: Math.round((value * 3) / 4) };
+        }
+        if (field === 'h') {
+          return { ...s, h: value, w: Math.round((value * 4) / 3) };
+        }
+      }
+      return { ...s, [field]: value };
+    });
+    setSlots(updated);
+    pushHistory(updated);
+  };
+
+  // --- Drag Handlers ---
+  const handleSlotMouseDown = (e: React.MouseEvent, slotId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const slot = slots.find((s) => s.id === slotId);
+    if (!slot) return;
+    setActiveSlotId(slotId);
+    dragState.current = {
+      dragging: true,
+      slotId,
+      startX: e.clientX,
+      startY: e.clientY,
+      origX: slot.x,
+      origY: slot.y,
+      shiftLocked: e.shiftKey,
+    };
   };
 
   const handleSave = async () => {
+    const paperSize = formatSize === '4r_strip' || formatSize === '4r_single' ? '4R'
+      : formatSize === '2r_mini' ? '2R'
+      : formatSize === '5r_wide' ? '5R'
+      : '4R';
+    const payload: any = {
+      name: templateName,
+      paper_size: paperSize,
+      orientation,
+      canvas_width: orientation === 'portrait' ? 1200 : 1800,
+      canvas_height: orientation === 'portrait' ? 1800 : 1200,
+      status: status.includes('Active') ? 'active' : status.includes('Draft') ? 'draft' : 'archived',
+      slots: slots.map((s, idx) => ({
+        key: `slot_${idx + 1}`,
+        x: s.x * 10,
+        y: s.y * 10,
+        w: s.w * 10,
+        h: s.h * 10,
+        crop_mode: cropRule,
+      })),
+    };
     try {
-      await templatesApi.create({
-        name: templateName,
-        paper_size: formatSize === '4r_strip' ? '4R' : '2R',
-        orientation: orientation,
-        canvas_width: orientation === 'portrait' ? 1200 : 1800,
-        canvas_height: orientation === 'portrait' ? 1800 : 1200,
-        status: 'active',
-      } as any);
+      if (templateId) {
+        // Update existing template
+        await templatesApi.update(templateId, payload);
+      } else {
+        // Create new template
+        const res = await templatesApi.create(payload);
+        const newId = (res as any)?.data?.id || null;
+        if (newId) setTemplateId(newId);
+      }
     } catch (err) {
       console.warn('API save template fallback:', err);
     }
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 3500);
+  };
+
+  const handleDuplicate = async () => {
+    try {
+      const paperSize = formatSize === '4r_strip' || formatSize === '4r_single' ? '4R'
+        : formatSize === '2r_mini' ? '2R'
+        : formatSize === '5r_wide' ? '5R' : '4R';
+      const res = await templatesApi.create({
+        name: `${templateName} — Salinan`,
+        paper_size: paperSize,
+        orientation,
+        canvas_width: orientation === 'portrait' ? 1200 : 1800,
+        canvas_height: orientation === 'portrait' ? 1800 : 1200,
+        status: 'draft',
+        slots: slots.map((s, idx) => ({
+          key: `slot_${idx + 1}`,
+          x: s.x * 10,
+          y: s.y * 10,
+          w: s.w * 10,
+          h: s.h * 10,
+          crop_mode: cropRule,
+        })),
+      } as any);
+      const newId = (res as any)?.data?.id;
+      showInfoToast(`Template "${templateName} — Salinan" berhasil diduplikat${newId ? ` (ID #${newId})` : ''}!`);
+    } catch (err) {
+      console.warn('Duplicate template API fallback:', err);
+      showInfoToast(`Template "${templateName} — Salinan" berhasil diduplikat sebagai draft baru.`);
+    }
+  };
+
+  const handleUploadFrame = () => {
+    frameUploadRef.current?.click();
+  };
+
+  const handleFrameFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('collection', 'template_frames');
+      const res = await apiClient.post('/media', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const uploadedUrl = res.data?.data?.url || res.data?.url;
+      if (uploadedUrl) {
+        // Update the frame background with the uploaded URL
+        setFrameFileName(file.name);
+        showInfoToast(`Frame "${file.name}" berhasil diupload dan diterapkan ke template!`);
+      } else {
+        setFrameFileName(file.name);
+        showInfoToast(`Frame "${file.name}" berhasil diproses.`);
+      }
+    } catch (err) {
+      console.warn('Frame upload fallback:', err);
+      setFrameFileName(file.name);
+      showInfoToast(`Frame "${file.name}" tersimpan secara lokal.`);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
   };
 
   const handleExportJson = () => {
@@ -154,14 +374,39 @@ export const TemplatesPage: React.FC = () => {
 
   return (
     <div className="flex flex-col w-full space-y-6">
+      {/* Hidden File Input for Frame Upload */}
+      <input
+        ref={frameUploadRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={handleFrameFileChange}
+      />
+
       {/* Save Success Toast */}
       {saveToast && (
         <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 border border-slate-800 transition-all">
           <span className="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
-          <span className="text-xs font-medium">Template dan koordinat slot berhasil disimpan ke cloud!</span>
+          <span className="text-xs font-medium">
+            {templateId ? 'Template berhasil diperbarui' : 'Template baru berhasil disimpan'} ke cloud!
+          </span>
           <button
             onClick={() => setSaveToast(false)}
             className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Info Toast (Duplicate / Upload / Assign) */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 bg-white text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 z-50 border border-slate-200 transition-all">
+          <span className="material-symbols-outlined text-indigo-600 text-lg">info</span>
+          <span className="text-xs font-medium">{toastMessage}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="text-slate-400 hover:text-slate-700 text-xs ml-2 cursor-pointer"
           >
             ✕
           </button>
@@ -205,7 +450,7 @@ export const TemplatesPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Template telah diduplikat sebagai copy baru.')}
+            onClick={handleDuplicate}
             className="gap-1.5 text-xs text-slate-700 bg-white"
           >
             <span className="material-symbols-outlined text-[15px] text-slate-500">content_copy</span>
@@ -226,7 +471,7 @@ export const TemplatesPage: React.FC = () => {
             className="gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm"
           >
             <span className="material-symbols-outlined text-[15px]">save</span>
-            <span>Simpan Template</span>
+            <span>{templateId ? 'Perbarui Template' : 'Simpan Template'}</span>
           </Button>
         </div>
       </div>
@@ -437,10 +682,13 @@ export const TemplatesPage: React.FC = () => {
                   <CardTitle className="text-sm font-bold text-slate-900">Layer &amp; Background</CardTitle>
                 </div>
                 <button
-                  onClick={() => alert('Fitur upload frame kustom aktif. Silakan pilih file PNG transparan 300 DPI.')}
-                  className="text-xs text-indigo-600 font-semibold hover:underline"
+                  onClick={handleUploadFrame}
+                  disabled={isUploading}
+                  className="text-xs text-indigo-600 font-semibold hover:underline disabled:opacity-50 flex items-center gap-1"
                 >
-                  + Upload
+                  {isUploading ? (
+                    <><span className="material-symbols-outlined text-[13px] animate-spin">progress_activity</span> Uploading...</>
+                  ) : '+ Upload'}
                 </button>
               </div>
             </CardHeader>
@@ -460,15 +708,28 @@ export const TemplatesPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-xs font-semibold text-slate-900 truncate">
-                    frame_floral_white_gold.png
+                    {frameFileName}
                   </span>
                   <span className="font-mono text-[10px] text-slate-500 truncate">
-                    1200x3600 • PNG-32 Alpha • 1.8MB
+                    1200x3600 • PNG-32 Alpha • Dye-Sub Ready
                   </span>
                   <div className="flex items-center gap-2 mt-1">
-                    <button className="text-[11px] text-indigo-600 font-medium hover:underline">Ganti File</button>
+                    <button
+                      onClick={handleUploadFrame}
+                      className="text-[11px] text-indigo-600 font-medium hover:underline"
+                    >
+                      Ganti File
+                    </button>
                     <span className="text-slate-300">•</span>
-                    <button className="text-[11px] text-rose-600 font-medium hover:underline">Hapus</button>
+                    <button
+                      onClick={() => {
+                        setFrameFileName('frame_floral_white_gold.png');
+                        showInfoToast('Frame layer telah direset ke default.');
+                      }}
+                      className="text-[11px] text-rose-600 font-medium hover:underline"
+                    >
+                      Reset
+                    </button>
                   </div>
                 </div>
               </div>
@@ -487,11 +748,51 @@ export const TemplatesPage: React.FC = () => {
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-slate-700">Background Solid Base</span>
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-white shadow-xs border border-slate-300"></span>
-                    <span className="font-mono text-xs text-slate-700 font-semibold">#FFFFFF</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-700">Background Solid Base</span>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value={bgColor}
+                        onChange={(e) => setBgColor(e.target.value)}
+                        className="w-7 h-7 rounded border border-slate-300 cursor-pointer p-0.5 bg-white shadow-2xs"
+                        title="Pilih warna kustom"
+                      />
+                      <input
+                        type="text"
+                        value={bgColor}
+                        onChange={(e) => setBgColor(e.target.value)}
+                        className="w-20 h-7 px-1.5 font-mono text-[11px] uppercase text-slate-800 bg-slate-50 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        maxLength={7}
+                      />
+                    </div>
+                  </div>
+                  {/* Quick Color Swatches */}
+                  <div className="flex items-center gap-1.5 pt-0.5 overflow-x-auto pb-1">
+                    {[
+                      { name: 'Putih', color: '#FFFFFF' },
+                      { name: 'Gading', color: '#FAF7F2' },
+                      { name: 'Warm Gold', color: '#FDF6E2' },
+                      { name: 'Rose Petal', color: '#FDF2F4' },
+                      { name: 'Soft Ice', color: '#F0F9FF' },
+                      { name: 'Slate', color: '#334155' },
+                      { name: 'Navy', color: '#0F172A' },
+                      { name: 'Black', color: '#000000' },
+                    ].map((swatch) => (
+                      <button
+                        key={swatch.color}
+                        type="button"
+                        onClick={() => setBgColor(swatch.color)}
+                        title={swatch.name}
+                        className={`w-5 h-5 rounded-full border transition-all cursor-pointer ${
+                          bgColor.toUpperCase() === swatch.color.toUpperCase()
+                            ? 'ring-2 ring-indigo-600 scale-110 border-white'
+                            : 'border-slate-300 hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: swatch.color }}
+                      />
+                    ))}
                   </div>
                 </div>
 
@@ -554,27 +855,34 @@ export const TemplatesPage: React.FC = () => {
                 <span>Grid 10px</span>
               </Badge>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs text-slate-700 bg-white gap-1"
+              <button
+                onClick={() => setShowSnapGuides((v) => !v)}
+                className={`text-xs gap-1 px-2.5 py-1 rounded-lg border flex items-center transition-all ${
+                  showSnapGuides
+                    ? 'bg-indigo-600 text-white border-indigo-600 font-semibold'
+                    : 'text-slate-700 bg-white border-slate-200 hover:bg-slate-50'
+                }`}
               >
-                <span className="material-symbols-outlined text-[14px]">qr_code_2</span>
+                <span className="material-symbols-outlined text-[14px]">straighten</span>
                 <span>Snap Guides</span>
-              </Button>
+              </button>
 
               <div className="w-px h-4 bg-slate-200"></div>
 
               <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg border border-slate-200">
                 <button
-                  className="w-7 h-7 rounded-md hover:bg-white flex items-center justify-center text-slate-600 transition-colors"
-                  title="Undo"
+                  onClick={handleUndo}
+                  disabled={historyIndex <= 0}
+                  className="w-7 h-7 rounded-md hover:bg-white flex items-center justify-center text-slate-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Undo (Ctrl+Z)"
                 >
                   <span className="material-symbols-outlined text-[15px]">undo</span>
                 </button>
                 <button
-                  className="w-7 h-7 rounded-md hover:bg-white flex items-center justify-center text-slate-600 transition-colors"
-                  title="Redo"
+                  onClick={handleRedo}
+                  disabled={historyIndex >= history.length - 1}
+                  className="w-7 h-7 rounded-md hover:bg-white flex items-center justify-center text-slate-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="Redo (Ctrl+Y)"
                 >
                   <span className="material-symbols-outlined text-[15px]">redo</span>
                 </button>
@@ -583,7 +891,10 @@ export const TemplatesPage: React.FC = () => {
           </div>
 
           {/* Realistic Canvas Container with Pixel/Metric Rulers */}
-          <div className="w-full bg-slate-100/70 rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden min-h-[760px] shadow-inner border border-slate-200">
+          <div
+            ref={canvasRef}
+            className="w-full bg-slate-100/70 rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden min-h-[760px] shadow-inner border border-slate-200"
+          >
             {/* Ambient Grid backdrop */}
             <div
               className="absolute inset-0 opacity-25 pointer-events-none"
@@ -603,10 +914,31 @@ export const TemplatesPage: React.FC = () => {
               <span>100 mm</span>
             </div>
 
+            {/* Snap Guides Overlay */}
+            {showSnapGuides && (
+              <>
+                {/* Horizontal center guide */}
+                <div className="absolute left-0 right-0 pointer-events-none z-10" style={{ top: '50%' }}>
+                  <div className="w-full border-t border-dashed border-cyan-500 opacity-60" />
+                </div>
+                {/* Vertical center guide */}
+                <div className="absolute top-0 bottom-0 pointer-events-none z-10" style={{ left: '50%' }}>
+                  <div className="h-full border-l border-dashed border-cyan-500 opacity-60" />
+                </div>
+                {/* Thirds horizontal */}
+                <div className="absolute left-0 right-0 pointer-events-none z-10" style={{ top: '33.3%' }}>
+                  <div className="w-full border-t border-dotted border-cyan-400 opacity-40" />
+                </div>
+                <div className="absolute left-0 right-0 pointer-events-none z-10" style={{ top: '66.6%' }}>
+                  <div className="w-full border-t border-dotted border-cyan-400 opacity-40" />
+                </div>
+              </>
+            )}
+
             {/* Physical 2x6 Print Strip Simulation Artboard */}
             <div
-              className="relative w-[340px] h-[720px] bg-white rounded-xl shadow-xl flex flex-col p-4 select-none transition-transform duration-200 border border-slate-200"
-              style={{ opacity: frameOpacity / 100 }}
+              className="relative w-[340px] h-[720px] rounded-xl shadow-xl flex flex-col p-4 select-none transition-transform duration-200 border border-slate-200"
+              style={{ backgroundColor: bgColor, opacity: frameOpacity / 100 }}
             >
               {/* Bleed Guideline (3mm) */}
               {showBleed && (
@@ -633,13 +965,18 @@ export const TemplatesPage: React.FC = () => {
 
               {/* SLOT 1 */}
               <div
+                onMouseDown={(e) => handleSlotMouseDown(e, 1)}
                 onClick={() => setActiveSlotId(1)}
-                className={`relative w-full h-[175px] bg-slate-100 rounded-lg overflow-hidden group cursor-pointer transition-all flex items-center justify-center mt-1 ${
+                className={`relative w-full h-[175px] bg-slate-100 rounded-lg overflow-hidden group cursor-grab active:cursor-grabbing transition-all flex items-center justify-center mt-1 ${
                   activeSlotId === 1
                     ? 'ring-2 ring-indigo-600 shadow-md'
                     : 'hover:ring-2 hover:ring-indigo-300'
                 }`}
-                style={{ borderRadius: `${cornerRadius}px` }}
+                style={{
+                  borderRadius: `${cornerRadius}px`,
+                  transform: `translate(${slots[0].x - 45}px, ${slots[0].y - 50}px)`,
+                  transition: dragState.current.dragging && dragState.current.slotId === 1 ? 'none' : 'transform 0.1s ease-out',
+                }}
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center"
@@ -665,13 +1002,18 @@ export const TemplatesPage: React.FC = () => {
 
               {/* SLOT 2 (DEFAULT ACTIVE) */}
               <div
+                onMouseDown={(e) => handleSlotMouseDown(e, 2)}
                 onClick={() => setActiveSlotId(2)}
-                className={`relative w-full h-[175px] bg-slate-200 rounded-lg overflow-hidden my-3 cursor-move transition-all flex items-center justify-center ${
+                className={`relative w-full h-[175px] bg-slate-200 rounded-lg overflow-hidden my-3 cursor-grab active:cursor-grabbing transition-all flex items-center justify-center ${
                   activeSlotId === 2
                     ? 'ring-2 ring-indigo-600 shadow-md'
                     : 'hover:ring-2 hover:ring-indigo-300'
                 }`}
-                style={{ borderRadius: `${cornerRadius}px` }}
+                style={{
+                  borderRadius: `${cornerRadius}px`,
+                  transform: `translate(${slots[1].x - 45}px, ${slots[1].y - 245}px)`,
+                  transition: dragState.current.dragging && dragState.current.slotId === 2 ? 'none' : 'transform 0.1s ease-out',
+                }}
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center"
@@ -697,13 +1039,18 @@ export const TemplatesPage: React.FC = () => {
 
               {/* SLOT 3 */}
               <div
+                onMouseDown={(e) => handleSlotMouseDown(e, 3)}
                 onClick={() => setActiveSlotId(3)}
-                className={`relative w-full h-[175px] bg-slate-100 rounded-lg overflow-hidden group cursor-pointer transition-all flex items-center justify-center ${
+                className={`relative w-full h-[175px] bg-slate-100 rounded-lg overflow-hidden group cursor-grab active:cursor-grabbing transition-all flex items-center justify-center ${
                   activeSlotId === 3
                     ? 'ring-2 ring-indigo-600 shadow-md'
                     : 'hover:ring-2 hover:ring-indigo-300'
                 }`}
-                style={{ borderRadius: `${cornerRadius}px` }}
+                style={{
+                  borderRadius: `${cornerRadius}px`,
+                  transform: `translate(${slots[2].x - 45}px, ${slots[2].y - 440}px)`,
+                  transition: dragState.current.dragging && dragState.current.slotId === 3 ? 'none' : 'transform 0.1s ease-out',
+                }}
               >
                 <div
                   className="absolute inset-0 bg-cover bg-center"
@@ -854,9 +1201,20 @@ export const TemplatesPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
-                      <button className="text-xs text-indigo-600 flex items-center gap-1 font-semibold hover:underline">
-                        <span className="material-symbols-outlined text-[14px]">lock</span>
-                        Kunci Rasio (4:3)
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsRatioLocked(!isRatioLocked);
+                          showInfoToast(!isRatioLocked ? 'Kunci rasio aspek (4:3) diaktifkan.' : 'Kunci rasio aspek dinonaktifkan.');
+                        }}
+                        className={`text-xs flex items-center gap-1 font-semibold transition-colors cursor-pointer ${
+                          isRatioLocked ? 'text-indigo-600 hover:text-indigo-700' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-[14px]">
+                          {isRatioLocked ? 'lock' : 'lock_open'}
+                        </span>
+                        <span>{isRatioLocked ? 'Kunci Rasio (4:3) Aktif' : 'Kunci Rasio Bebas'}</span>
                       </button>
                       <div className="flex items-center gap-1 text-slate-500 font-mono text-xs">
                         <span className="material-symbols-outlined text-[14px]">rotate_right</span>

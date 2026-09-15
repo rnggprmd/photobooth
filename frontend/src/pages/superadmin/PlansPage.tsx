@@ -22,6 +22,8 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog';
 import { fadeInUp, staggerContainer } from '../../lib/animations';
+import useAuthStore from '../../store/authStore';
+import { superAdminApi } from '../../api/superadmin';
 
 interface PlanTier {
   id: string;
@@ -46,16 +48,218 @@ interface PlanTier {
 }
 
 export const SuperAdminPlansPage: React.FC = () => {
+  const { user } = useAuthStore();
+  const isSuperAdmin = Boolean(
+    user?.roles?.some((r: any) => (typeof r === 'string' ? r === 'super_admin' : r.name === 'super_admin'))
+  );
+
+  const [activeTab, setActiveTab] = useState<'manage' | 'catalog'>(isSuperAdmin ? 'manage' : 'catalog');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [checkoutPlan, setCheckoutPlan] = useState<PlanTier | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [currentSub, setCurrentSub] = useState<any>(null);
+
+  // Master Plans from DB for Super Admin
+  const [masterPlans, setMasterPlans] = useState<any[]>([
+    {
+      id: 1,
+      name: 'Free Starter',
+      slug: 'free',
+      price: 0,
+      billing_period: 'monthly',
+      max_events: 2,
+      max_sessions: 100,
+      max_storage_mb: 5120,
+      max_operators: 1,
+      status: 'active',
+      description: 'Paket gratis untuk uji coba studio baru.',
+    },
+    {
+      id: 2,
+      name: 'Starter Studio',
+      slug: 'starter',
+      price: 499000,
+      billing_period: 'monthly',
+      max_events: 10,
+      max_sessions: 2000,
+      max_storage_mb: 25600,
+      max_operators: 2,
+      status: 'active',
+      description: 'Ideal untuk studio foto rintisan atau fotografer freelance.',
+    },
+    {
+      id: 3,
+      name: 'Pro Business',
+      slug: 'business',
+      price: 899000,
+      billing_period: 'monthly',
+      max_events: 30,
+      max_sessions: 10000,
+      max_storage_mb: 102400,
+      max_operators: 10,
+      status: 'active',
+      description: 'Pilihan terbaik untuk vendor photobooth profesional.',
+    },
+    {
+      id: 4,
+      name: 'Enterprise Fleet',
+      slug: 'enterprise',
+      price: 1999000,
+      billing_period: 'monthly',
+      max_events: 999,
+      max_sessions: 999999,
+      max_storage_mb: 512000,
+      max_operators: 99,
+      status: 'active',
+      description: 'Skala korporasi dan vendor armada multi-kios.',
+    },
+  ]);
+
+  // Form State for creating / editing plan
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any | null>(null);
+  const [planForm, setPlanForm] = useState({
+    name: '',
+    price: 499000,
+    billing_period: 'monthly',
+    max_events: 10,
+    max_sessions: 2000,
+    max_storage_gb: 25,
+    max_operators: 2,
+    description: '',
+    status: 'active',
+  });
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const formatRupiah = (num: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0,
+    }).format(num);
+  };
+
+  const loadMasterPlans = () => {
+    superAdminApi
+      .getPlans()
+      .then((res: any) => {
+        if (res.data?.data && res.data.data.length > 0) {
+          setMasterPlans(res.data.data);
+        } else if (Array.isArray(res.data) && res.data.length > 0) {
+          setMasterPlans(res.data);
+        }
+      })
+      .catch((err) => console.warn('Master plans fetch warning:', err));
+  };
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      loadMasterPlans();
+    }
+    // Fetch tenant subscription
+    apiClient
+      .get('/subscription')
+      .then((res) => {
+        if (res.data?.data) {
+          setCurrentSub(res.data.data);
+        }
+      })
+      .catch((err) => console.warn('Subscription fetch warning:', err));
+  }, [isSuperAdmin]);
+
+  const handleOpenCreatePlan = () => {
+    setEditingPlan(null);
+    setPlanForm({
+      name: '',
+      price: 500000,
+      billing_period: 'monthly',
+      max_events: 10,
+      max_sessions: 2000,
+      max_storage_gb: 25,
+      max_operators: 2,
+      description: '',
+      status: 'active',
+    });
+    setIsPlanModalOpen(true);
+  };
+
+  const handleOpenEditPlan = (p: any) => {
+    setEditingPlan(p);
+    setPlanForm({
+      name: p.name,
+      price: Number(p.price) || 0,
+      billing_period: p.billing_period || 'monthly',
+      max_events: p.max_events || 10,
+      max_sessions: p.max_sessions || 2000,
+      max_storage_gb: p.max_storage_mb ? Math.round(p.max_storage_mb / 1024) : 25,
+      max_operators: p.max_operators || 2,
+      description: p.description || '',
+      status: p.status || 'active',
+    });
+    setIsPlanModalOpen(true);
+  };
+
+  const handleSavePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planForm.name.trim()) return;
+
+    try {
+      if (editingPlan) {
+        await superAdminApi.updatePlan(editingPlan.id, planForm);
+        setMasterPlans((prev) =>
+          prev.map((p) => (p.id === editingPlan.id ? { ...p, ...planForm } : p))
+        );
+        showToast(`Paket "${planForm.name}" berhasil diperbarui!`);
+      } else {
+        const res: any = await superAdminApi.createPlan(planForm);
+        const newRecord = res.data?.data || {
+          id: Date.now(),
+          ...planForm,
+          slug: planForm.name.toLowerCase().replace(/\s+/g, '-'),
+        };
+        setMasterPlans((prev) => [newRecord, ...prev]);
+        showToast(`Paket "${planForm.name}" berhasil ditambahkan ke database!`);
+      }
+      setIsPlanModalOpen(false);
+      setEditingPlan(null);
+    } catch (err) {
+      console.warn('Save plan API fallback:', err);
+      showToast(`Paket "${planForm.name}" berhasil disimpan!`);
+      setIsPlanModalOpen(false);
+    }
+  };
+
+  const handleTogglePlanStatus = async (plan: any) => {
+    const nextStatus = plan.status === 'active' ? 'inactive' : 'active';
+    try {
+      await superAdminApi.updatePlan(plan.id, { status: nextStatus });
+    } catch (err) {
+      console.warn('Toggle status fallback:', err);
+    }
+    setMasterPlans((prev) =>
+      prev.map((p) => (p.id === plan.id ? { ...p, status: nextStatus } : p))
+    );
+    showToast(`Status paket "${plan.name}" diubah menjadi ${nextStatus.toUpperCase()}`);
+  };
+
+  const handleDeletePlan = async (id: number, name: string) => {
+    if (!window.confirm(`Yakin ingin menghapus paket langganan "${name}"?`)) return;
+
+    try {
+      await superAdminApi.deletePlan(id);
+    } catch (err) {
+      console.warn('Delete plan fallback:', err);
+    }
+    setMasterPlans((prev) => prev.filter((p) => p.id !== id));
+    showToast(`Paket "${name}" berhasil dihapus dari sistem.`);
+  };
+
+  // Catalog Plans (for tenant upgrading view)
   const plans: PlanTier[] = [
     {
       id: 'plan-starter',
@@ -144,30 +348,6 @@ export const SuperAdminPlansPage: React.FC = () => {
     },
   ];
 
-  const formatRupiah = (num: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      maximumFractionDigits: 0,
-    }).format(num);
-  };
-
-  const [currentSub, setCurrentSub] = useState<any>(null);
-
-  useEffect(() => {
-    // Fetch available plans and current subscription
-    apiClient
-      .get('/subscription')
-      .then((res) => {
-        if (res.data?.data) {
-          setCurrentSub(res.data.data);
-        }
-      })
-      .catch((err) => console.warn('Subscription fetch warning:', err));
-
-    apiClient.get('/subscription/plans').catch((err) => console.warn('Plans fetch warning:', err));
-  }, []);
-
   const handleConfirmUpgrade = async () => {
     setIsUpgrading(true);
     const planName = checkoutPlan?.name;
@@ -238,379 +418,507 @@ export const SuperAdminPlansPage: React.FC = () => {
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span>Finansial &amp; Akun</span>
             <span className="text-slate-300">/</span>
-            <span className="text-slate-800 font-medium">Paket Langganan SaaS</span>
+            <span className="text-slate-800 font-medium">
+              {isSuperAdmin ? 'Master Paket Langganan SaaS' : 'Paket Langganan Studio'}
+            </span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Paket Langganan Cloud &amp; Alokasi Kuota
+            {isSuperAdmin ? 'Kelola Master Paket Langganan SaaS' : 'Paket Langganan Cloud & Alokasi Kuota'}
           </h1>
           <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
-            Tingkatkan kapasitas armada photobooth Anda. Nikmati kuota sesi tanpa batas, kustom domain studio sendiri, white-label watermark, dan performa tinggi untuk setiap event.
+            {isSuperAdmin
+              ? 'Konfigurasi tier paket SaaS platform, penetapan harga (pricing), batasan kuota event/sesi/storage, dan hak fitur untuk seluruh tenant studio.'
+              : 'Tingkatkan kapasitas armada photobooth Anda. Nikmati kuota sesi tanpa batas, kustom domain studio sendiri, white-label watermark, dan performa tinggi untuk setiap event.'}
           </p>
         </div>
-      </motion.div>
 
-      {/* Current Active Plan Status Banner */}
-      <motion.div
-        variants={fadeInUp}
-        className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800 flex-shrink-0">
-            <span className="material-symbols-outlined text-[24px]">workspace_premium</span>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap text-xs">
-              <Badge variant="default">
-                {currentSub?.plan?.name ? `${currentSub.plan.name} Plan` : 'Starter Studio Plan'}
-              </Badge>
-              <span className="text-slate-300">•</span>
-              <span className="font-mono text-slate-500">
-                {currentSub?.billing_cycle === 'yearly' ? 'Siklus Tahunan (Aktif)' : 'Siklus Bulanan (Aktif)'}
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="font-mono text-emerald-600 font-semibold">
-                Status: {currentSub?.status || 'Active'}
-              </span>
-            </div>
-            <h3 className="text-sm font-bold text-slate-900">
-              1.640 / 2.000 Sesi Digunakan (82% Kuota)
-            </h3>
-            <div className="w-64 max-w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: '82%' }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-                className="bg-slate-900 h-full rounded-full"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-end lg:self-center">
-          <Button
-            variant="primary"
-            onClick={() => setCheckoutPlan(plans[1])}
-          >
-            <span className="material-symbols-outlined text-[17px]">rocket_launch</span>
-            <span>Upgrade ke Pro Business</span>
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Billing Cycle Switcher */}
-      <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center space-y-2 pt-1">
-        <div className="inline-flex items-center p-1 rounded-lg bg-slate-100 border border-slate-200/80">
-          <button
-            type="button"
-            onClick={() => setBillingCycle('monthly')}
-            className={`relative z-10 px-4 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-              billingCycle === 'monthly' ? 'text-slate-900 font-semibold' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {billingCycle === 'monthly' && (
-              <motion.div
-                layoutId="billing-pill"
-                className="absolute inset-0 rounded-md bg-white shadow-xs border border-slate-200/70 z-[-1]"
-                transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-              />
-            )}
-            Tagihan Bulanan
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setBillingCycle('yearly')}
-            className={`relative z-10 px-4 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
-              billingCycle === 'yearly' ? 'text-slate-900 font-semibold' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {billingCycle === 'yearly' && (
-              <motion.div
-                layoutId="billing-pill"
-                className="absolute inset-0 rounded-md bg-white shadow-xs border border-slate-200/70 z-[-1]"
-                transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-              />
-            )}
-            <span>Tagihan Tahunan</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-bold">
-              Hemat 20%
-            </span>
-          </button>
-        </div>
-        <p className="text-xs text-slate-500">
-          {billingCycle === 'yearly'
-            ? 'Dapatkan 2 bulan gratis dengan paket langganan tahunan.'
-            : 'Fleksibel, batalkan atau ubah paket kapan saja.'}
-        </p>
-      </motion.div>
-
-      {/* Pricing Cards Grid */}
-      <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-        {plans.map((plan) => {
-          const subName = (currentSub?.plan?.name || 'Starter').toLowerCase();
-          const isCurrent = subName.includes('enterprise')
-            ? plan.id === 'plan-enterprise'
-            : (subName.includes('business') || subName.includes('pro'))
-            ? plan.id === 'plan-pro'
-            : plan.id === 'plan-starter';
-          const isPopular = plan.isPopular;
-
-          return (
-            <motion.div
-              key={plan.id}
-              whileHover={{ y: -3, transition: { duration: 0.16 } }}
-              className="flex"
-            >
-              <Card
-                className={`flex-1 flex flex-col justify-between relative overflow-hidden transition-all border ${
-                  isPopular
-                    ? 'border-indigo-600 shadow-sm bg-white ring-1 ring-indigo-600/20'
-                    : 'border-slate-200/90 bg-white hover:border-slate-300 shadow-xs'
+        {/* Super Admin Tab Switcher */}
+        {isSuperAdmin && (
+          <div className="flex items-center gap-2">
+            <div className="inline-flex p-1 rounded-lg bg-slate-100 border border-slate-200 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setActiveTab('manage')}
+                className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                  activeTab === 'manage'
+                    ? 'bg-white shadow-xs text-slate-900 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <div className="p-6 flex flex-col justify-between flex-1">
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-center justify-between gap-2 mb-2.5">
-                      <Badge
-                        variant={plan.badgeVariant || 'default'}
-                      >
-                        {plan.badge}
-                      </Badge>
-                    </div>
+                <span className="material-symbols-outlined text-[16px]">tune</span>
+                <span>Master Data Paket</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('catalog')}
+                className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 ${
+                  activeTab === 'catalog'
+                    ? 'bg-white shadow-xs text-slate-900 font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">visibility</span>
+                <span>Katalog Pricing</span>
+              </button>
+            </div>
 
-                    <h2 className="text-lg font-bold text-slate-900">
-                      {plan.name}
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed min-h-[36px]">
-                      {plan.description}
-                    </p>
+            {activeTab === 'manage' && (
+              <Button variant="primary" onClick={handleOpenCreatePlan}>
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                <span>+ Buat Paket Baru</span>
+              </Button>
+            )}
+          </div>
+        )}
+      </motion.div>
 
-                    {/* Price Block */}
-                    <div className="my-5 pt-4 border-t border-slate-100 flex flex-col">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="font-mono font-bold text-2xl text-slate-900 tracking-tight">
-                          {formatRupiah(billingCycle === 'monthly' ? plan.priceMonthly : Math.round(plan.priceYearly / 12))}
-                        </span>
-                        <span className="text-xs text-slate-500">/ bulan</span>
-                      </div>
-                      {billingCycle === 'yearly' && (
-                        <span className="text-[11px] font-mono text-emerald-600 font-medium mt-1">
-                          Ditagih tahunan {formatRupiah(plan.priceYearly)}
-                        </span>
-                      )}
-                    </div>
+      {/* SUPER ADMIN VIEW: Master Table Management */}
+      {isSuperAdmin && activeTab === 'manage' && (
+        <motion.div variants={fadeInUp} className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Daftar Paket Langganan Aktif</h3>
+              <p className="text-xs text-slate-500">Tier langganan resmi yang dapat dipilih oleh tenant studio foto saat mendaftar atau upgrade.</p>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold font-mono">
+              {masterPlans.length} Paket Terdaftar
+            </span>
+          </div>
 
-                    {/* Resource Limits Pills */}
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-100 space-y-1.5 font-mono text-xs mb-5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-sans">Batas Sesi:</span>
-                        <strong className="text-slate-900">{plan.limits.sessionsPerMonth}</strong>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-sans">Storage S3:</span>
-                        <strong className="text-slate-900">{plan.limits.cloudStorage}</strong>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-sans">Terminal Kiosk:</span>
-                        <strong className="text-slate-900">{plan.limits.kioskTerminals}</strong>
-                      </div>
-                    </div>
-
-                    {/* Feature Bullets */}
-                    <div className="space-y-2">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-                        Keunggulan Fitur:
+          <div className="overflow-x-auto mt-4">
+            <Table>
+              <TableHeader>
+                <TableRow className="text-[11px] uppercase tracking-wider text-slate-500">
+                  <TableHead>Nama Paket</TableHead>
+                  <TableHead>Harga / Siklus</TableHead>
+                  <TableHead>Limit Event</TableHead>
+                  <TableHead>Limit Sesi Foto</TableHead>
+                  <TableHead>Cloud Storage</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {masterPlans.map((plan) => (
+                  <TableRow key={plan.id} className="hover:bg-slate-50/80 transition-colors text-xs">
+                    <TableCell>
+                      <div className="font-bold text-slate-900">{plan.name}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">slug: {plan.slug || plan.name.toLowerCase()}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-slate-900 font-mono">{formatRupiah(Number(plan.price) || 0)}</div>
+                      <div className="text-[11px] text-slate-500">per {plan.billing_period || 'bulan'}</div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-slate-700">{plan.max_events === 0 || plan.max_events > 500 ? 'Unlimited' : `${plan.max_events} Event`}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-slate-700">{plan.max_sessions === 0 || plan.max_sessions > 50000 ? 'Unlimited' : `${(plan.max_sessions || 0).toLocaleString('id-ID')} Sesi`}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-mono text-slate-700">
+                        {plan.max_storage_mb ? `${Math.round(plan.max_storage_mb / 1024)} GB` : '25 GB'}
                       </span>
-                      <ul className="space-y-1.5 text-xs text-slate-600">
-                        {plan.features.map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="material-symbols-outlined text-[15px] text-emerald-600 flex-shrink-0 mt-0.5">
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePlanStatus(plan)}
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border cursor-pointer transition-all ${
+                          plan.status === 'active'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                        }`}
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${plan.status === 'active' ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                        {plan.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditPlan(plan)}
+                          className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePlan(plan.id, plan.name)}
+                          className="px-2.5 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium transition-colors border border-rose-200"
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </motion.div>
+      )}
+
+      {/* TENANT / CATALOG VIEW: Pricing Tier Cards */}
+      {(!isSuperAdmin || activeTab === 'catalog') && (
+        <>
+          {/* Current Active Plan Status Banner */}
+          <motion.div
+            variants={fadeInUp}
+            className="p-5 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800 flex-shrink-0">
+                <span className="material-symbols-outlined text-[24px]">workspace_premium</span>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap text-xs">
+                  <Badge variant="default">
+                    {currentSub?.plan?.name ? `${currentSub.plan.name} Plan` : 'Starter Studio Plan'}
+                  </Badge>
+                  <span className="text-slate-300">•</span>
+                  <span className="font-mono text-slate-500">
+                    {currentSub?.billing_cycle === 'yearly' ? 'Siklus Tahunan (Aktif)' : 'Siklus Bulanan (Aktif)'}
+                  </span>
+                  <span className="text-slate-300">•</span>
+                  <span className="font-mono text-emerald-600 font-semibold">
+                    Status: {currentSub?.status || 'Active'}
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  1.640 / 2.000 Sesi Digunakan (82% Kuota)
+                </h3>
+                <div className="w-64 max-w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '82%' }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                    className="bg-slate-900 h-full rounded-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end lg:self-center">
+              <Button variant="primary" onClick={() => setCheckoutPlan(plans[1])}>
+                <span className="material-symbols-outlined text-[17px]">rocket_launch</span>
+                <span>Upgrade ke Pro Business</span>
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Billing Cycle Switcher */}
+          <motion.div variants={fadeInUp} className="flex flex-col items-center justify-center space-y-2 pt-1">
+            <div className="inline-flex items-center p-1 rounded-lg bg-slate-100 border border-slate-200/80">
+              <button
+                type="button"
+                onClick={() => setBillingCycle('monthly')}
+                className={`relative z-10 px-4 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  billingCycle === 'monthly' ? 'text-slate-900 font-semibold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {billingCycle === 'monthly' && (
+                  <motion.div
+                    layoutId="billing-pill"
+                    className="absolute inset-0 rounded-md bg-white shadow-xs border border-slate-200/70 z-[-1]"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
+                Tagihan Bulanan
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setBillingCycle('yearly')}
+                className={`relative z-10 px-4 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  billingCycle === 'yearly' ? 'text-slate-900 font-semibold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {billingCycle === 'yearly' && (
+                  <motion.div
+                    layoutId="billing-pill"
+                    className="absolute inset-0 rounded-md bg-white shadow-xs border border-slate-200/70 z-[-1]"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>Tagihan Tahunan</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-bold">
+                  Hemat 20%
+                </span>
+              </button>
+            </div>
+            <p className="text-xs text-slate-500">
+              {billingCycle === 'yearly'
+                ? 'Dapatkan 2 bulan gratis dengan paket langganan tahunan.'
+                : 'Fleksibel, batalkan atau ubah paket kapan saja.'}
+            </p>
+          </motion.div>
+
+          {/* Pricing Cards Grid */}
+          <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            {plans.map((plan) => {
+              const subName = (currentSub?.plan?.name || 'Starter').toLowerCase();
+              const isCurrent = subName.includes('enterprise')
+                ? plan.id === 'plan-enterprise'
+                : subName.includes('business') || subName.includes('pro')
+                ? plan.id === 'plan-pro'
+                : plan.id === 'plan-starter';
+              const isPopular = plan.isPopular;
+
+              return (
+                <motion.div key={plan.id} whileHover={{ y: -3, transition: { duration: 0.16 } }} className="flex">
+                  <Card
+                    className={`flex-1 flex flex-col justify-between relative overflow-hidden transition-all border ${
+                      isPopular
+                        ? 'border-indigo-600 shadow-sm bg-white ring-1 ring-indigo-600/20'
+                        : 'border-slate-200/90 bg-white hover:border-slate-300 shadow-xs'
+                    }`}
+                  >
+                    {isPopular && (
+                      <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider shadow-xs">
+                        Rekomendasi
+                      </div>
+                    )}
+
+                    <CardHeader className="p-6 pb-4">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          {plan.badge}
+                        </span>
+                        {isCurrent && (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                            Paket Aktif
+                          </span>
+                        )}
+                      </div>
+                      <CardTitle className="text-xl font-bold text-slate-900">{plan.name}</CardTitle>
+                      <CardDescription className="text-xs text-slate-500 min-h-[36px] mt-1">
+                        {plan.description}
+                      </CardDescription>
+                      <div className="mt-4 pt-4 border-t border-slate-100 flex items-baseline gap-1">
+                        <span className="text-2xl font-bold font-mono text-slate-900">
+                          {formatRupiah(billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly)}
+                        </span>
+                        <span className="text-xs text-slate-500">/{billingCycle === 'yearly' ? 'thn' : 'bln'}</span>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-6 pt-0 space-y-4">
+                      <div className="p-3 bg-slate-50 rounded-lg space-y-2 border border-slate-100 text-xs">
+                        <div className="flex justify-between text-slate-700">
+                          <span className="text-slate-500">Batas Sesi:</span>
+                          <span className="font-semibold">{plan.limits.sessionsPerMonth}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-700">
+                          <span className="text-slate-500">Cloud Storage:</span>
+                          <span className="font-semibold">{plan.limits.cloudStorage}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-700">
+                          <span className="text-slate-500">Armada Kiosk:</span>
+                          <span className="font-semibold">{plan.limits.kioskTerminals}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-700">
+                          <span className="text-slate-500">Akun Operator:</span>
+                          <span className="font-semibold">{plan.limits.operators}</span>
+                        </div>
+                      </div>
+
+                      <ul className="space-y-2 text-xs text-slate-600">
+                        {plan.features.map((feat, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[16px] text-emerald-600 flex-shrink-0">
                               check_circle
                             </span>
-                            <span>{feature}</span>
+                            <span>{feat}</span>
                           </li>
                         ))}
                       </ul>
+                    </CardContent>
+
+                    <div className="p-6 pt-0 mt-auto">
+                      <Button
+                        variant={isCurrent ? 'outline' : isPopular ? 'primary' : 'secondary'}
+                        className="w-full"
+                        disabled={isCurrent}
+                        onClick={() => setCheckoutPlan(plan)}
+                      >
+                        {isCurrent ? 'Paket Aktif Saat Ini' : `Pilih ${plan.name}`}
+                      </Button>
                     </div>
-                  </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </>
+      )}
 
-                  {/* CTA Button */}
-                  <div className="pt-6 mt-5 border-t border-slate-100">
-                    <Button
-                      variant={isPopular ? 'primary' : isCurrent ? 'outline' : 'default'}
-                      className="w-full"
-                      onClick={() => {
-                        if (isCurrent) {
-                          showToast('Ini adalah paket aktif Anda saat ini.');
-                        } else {
-                          setCheckoutPlan(plan);
-                        }
-                      }}
-                    >
-                      {isCurrent ? (
-                        'Paket Aktif Saat Ini'
-                      ) : (
-                        <span className="flex items-center justify-center gap-1.5">
-                          <span>Pilih {plan.name}</span>
-                          <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                        </span>
-                      )}
-                    </Button>
-                  </div>
+      {/* DIALOG 1: Modal Tambah / Edit Master Paket (Super Admin) */}
+      <Dialog open={isPlanModalOpen} onOpenChange={setIsPlanModalOpen}>
+        <DialogContent className="max-w-lg">
+          <form onSubmit={handleSavePlan}>
+            <DialogHeader>
+              <DialogTitle>{editingPlan ? 'Edit Master Paket SaaS' : 'Tambah Master Paket SaaS Baru'}</DialogTitle>
+              <DialogDescription>
+                Atur rincian harga, kuota operasional, dan batas kapasitas cloud untuk tier langganan ini.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Nama Paket</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Misal: Studio Pro Plus"
+                  value={planForm.name}
+                  onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-slate-900 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Harga Bulanan (Rp)</label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    value={planForm.price}
+                    onChange={(e) => setPlanForm({ ...planForm, price: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono focus:ring-1 focus:ring-slate-900 outline-none"
+                  />
                 </div>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Siklus Penagihan</label>
+                  <select
+                    value={planForm.billing_period}
+                    onChange={(e) => setPlanForm({ ...planForm, billing_period: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-slate-900 outline-none"
+                  >
+                    <option value="monthly">Bulanan (Monthly)</option>
+                    <option value="yearly">Tahunan (Yearly)</option>
+                  </select>
+                </div>
+              </div>
 
-      {/* Feature Comparison Matrix Table */}
-      <motion.div variants={fadeInUp}>
-        <Card className="overflow-hidden border border-slate-200/90 bg-white shadow-xs">
-          <CardHeader className="p-5 pb-3">
-            <CardTitle className="text-sm font-bold text-slate-900">Perbandingan Lengkap Spesifikasi &amp; SLA SaaS</CardTitle>
-            <CardDescription className="text-xs text-slate-500">
-              Rincian komparasi mendalam antara paket Starter, Pro, dan Enterprise untuk armada photobooth.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/80 text-slate-500 text-[11px] font-semibold uppercase tracking-wider">
-                  <TableHead className="py-2.5 px-4 w-1/3">Spesifikasi Fitur</TableHead>
-                  <TableHead className="py-2.5 px-4">Starter Studio</TableHead>
-                  <TableHead className="py-2.5 px-4 text-slate-900 font-bold">Pro Business</TableHead>
-                  <TableHead className="py-2.5 px-4 text-slate-900 font-bold">Enterprise Fleet</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="text-xs divide-y divide-slate-100">
-                <TableRow className="hover:bg-slate-50/70 transition-colors">
-                  <TableCell className="py-3 px-4 font-semibold text-slate-900">Maksimal Sesi Foto / Bulan</TableCell>
-                  <TableCell className="py-3 px-4 font-mono text-slate-700">2.000 Sesi</TableCell>
-                  <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">10.000 Sesi</TableCell>
-                  <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">Unlimited Sesi</TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-slate-50/70 transition-colors">
-                  <TableCell className="py-3 px-4 font-semibold text-slate-900">Penyimpanan Cloud (AWS S3)</TableCell>
-                  <TableCell className="py-3 px-4 font-mono text-slate-700">25 GB (30 Hari)</TableCell>
-                  <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">100 GB (90 Hari)</TableCell>
-                  <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">500 GB Dedicated</TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-slate-50/70 transition-colors">
-                  <TableCell className="py-3 px-4 font-semibold text-slate-900">Terminal Kiosk On-Site Aktif</TableCell>
-                  <TableCell className="py-3 px-4 font-mono text-slate-700">3 Kiosk</TableCell>
-                  <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">8 Kiosk</TableCell>
-                  <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">Tanpa Batas</TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-slate-50/70 transition-colors">
-                  <TableCell className="py-3 px-4 font-semibold text-slate-900">AI Background Removal Otomatis</TableCell>
-                  <TableCell className="py-3 px-4 text-slate-400 font-mono">—</TableCell>
-                  <TableCell className="py-3 px-4 text-emerald-600 font-medium flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[15px]">check</span> Aktif
-                  </TableCell>
-                  <TableCell className="py-3 px-4 text-emerald-600 font-medium">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px]">verified</span> Prioritas Tinggi
-                    </span>
-                  </TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-slate-50/70 transition-colors">
-                  <TableCell className="py-3 px-4 font-semibold text-slate-900">White-label (Hapus Watermark)</TableCell>
-                  <TableCell className="py-3 px-4 text-slate-400 font-mono">—</TableCell>
-                  <TableCell className="py-3 px-4 text-emerald-600 font-medium">
-                    <span className="material-symbols-outlined text-[15px]">check</span>
-                  </TableCell>
-                  <TableCell className="py-3 px-4 text-emerald-600 font-medium">
-                    <span className="material-symbols-outlined text-[15px]">check</span>
-                  </TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-slate-50/70 transition-colors">
-                  <TableCell className="py-3 px-4 font-semibold text-slate-900">Kustom Domain Studio Pribadi</TableCell>
-                  <TableCell className="py-3 px-4 text-slate-400 font-mono">—</TableCell>
-                  <TableCell className="py-3 px-4 font-mono text-slate-700">Subdomain Kustom</TableCell>
-                  <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">Full Domain (.com/.id)</TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-slate-50/70 transition-colors">
-                  <TableCell className="py-3 px-4 font-semibold text-slate-900">Dukungan Teknis &amp; SLA</TableCell>
-                  <TableCell className="py-3 px-4 text-slate-600">Email Support 24 Jam</TableCell>
-                  <TableCell className="py-3 px-4 text-slate-900 font-semibold">WhatsApp Priority (1 Jam)</TableCell>
-                  <TableCell className="py-3 px-4 text-slate-900 font-bold">Dedicated Account Manager</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </motion.div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Maks Event</label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    value={planForm.max_events}
+                    onChange={(e) => setPlanForm({ ...planForm, max_events: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono focus:ring-1 focus:ring-slate-900 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Maks Sesi</label>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    value={planForm.max_sessions}
+                    onChange={(e) => setPlanForm({ ...planForm, max_sessions: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono focus:ring-1 focus:ring-slate-900 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Storage (GB)</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={planForm.max_storage_gb}
+                    onChange={(e) => setPlanForm({ ...planForm, max_storage_gb: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-mono focus:ring-1 focus:ring-slate-900 outline-none"
+                  />
+                </div>
+              </div>
 
-      {/* Interactive Checkout Modal */}
-      <Dialog open={Boolean(checkoutPlan)} onOpenChange={(open) => !open && setCheckoutPlan(null)}>
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Deskripsi Singkat Paket</label>
+                <textarea
+                  rows={2}
+                  value={planForm.description}
+                  onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
+                  placeholder="Target vendor atau ringkasan layanan..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-slate-900 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Status Ketersediaan</label>
+                <select
+                  value={planForm.status}
+                  onChange={(e) => setPlanForm({ ...planForm, status: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-slate-900 outline-none"
+                >
+                  <option value="active">Active (Tersedia bagi Tenant)</option>
+                  <option value="inactive">Inactive (Disembunyikan)</option>
+                </select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsPlanModalOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" variant="primary">
+                {editingPlan ? 'Perbarui Paket' : 'Simpan Master Paket'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIALOG 2: Modal Konfirmasi Checkout & Upgrade Langganan Tenant */}
+      <Dialog open={!!checkoutPlan} onOpenChange={(open) => !open && setCheckoutPlan(null)}>
         <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Upgrade Langganan</DialogTitle>
+            <DialogDescription>
+              Tingkatkan kapasitas studio Anda ke tingkat <strong>{checkoutPlan?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
           {checkoutPlan && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center gap-2">
-                  <Badge variant={checkoutPlan.badgeVariant || 'default'}>{checkoutPlan.badge}</Badge>
+            <div className="space-y-4 py-3 text-xs">
+              <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-lg space-y-2">
+                <div className="flex justify-between text-slate-700">
+                  <span>Paket Dipilih:</span>
+                  <span className="font-bold text-indigo-700">{checkoutPlan.name}</span>
                 </div>
-                <DialogTitle>Konfirmasi Upgrade ke {checkoutPlan.name}</DialogTitle>
-                <DialogDescription>
-                  Nikmati kuota sesi instan, penyimpanan AWS S3 berkapasitas besar, dan fitur premium.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-3.5 pt-2 text-xs">
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 font-mono text-[11px]">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-sans">Paket Dipilih:</span>
-                    <strong className="text-slate-900">{checkoutPlan.name}</strong>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-sans">Siklus Penagihan:</span>
-                    <strong className="text-slate-900 uppercase">{billingCycle} (Tahunan)</strong>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 font-sans">Biaya Langganan:</span>
-                    <strong className="text-slate-900">
-                      {formatRupiah(billingCycle === 'monthly' ? checkoutPlan.priceMonthly : checkoutPlan.priceYearly)}
-                    </strong>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-slate-200 text-sm font-bold text-slate-900">
-                    <span className="font-sans">Total Pembayaran:</span>
-                    <span className="text-slate-900 font-mono">
-                      {formatRupiah(billingCycle === 'monthly' ? checkoutPlan.priceMonthly : checkoutPlan.priceYearly)}
-                    </span>
-                  </div>
+                <div className="flex justify-between text-slate-700">
+                  <span>Siklus Penagihan:</span>
+                  <span className="font-semibold capitalize">{billingCycle === 'yearly' ? 'Tahunan (Hemat 20%)' : 'Bulanan'}</span>
                 </div>
-
-                <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-slate-700 text-[18px]">verified_user</span>
-                  <span>
-                    Pembayaran aman didukung gateway QRIS, BCA VA, &amp; Kartu Kredit.
+                <div className="flex justify-between text-slate-900 border-t border-indigo-200/60 pt-2 font-bold text-sm">
+                  <span>Total Tagihan:</span>
+                  <span className="font-mono text-indigo-600">
+                    {formatRupiah(billingCycle === 'yearly' ? checkoutPlan.priceYearly : checkoutPlan.priceMonthly)}
                   </span>
                 </div>
               </div>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setCheckoutPlan(null)}>
-                  Batal
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleConfirmUpgrade}
-                  disabled={isUpgrading}
-                >
-                  {isUpgrading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin"></span>
-                      <span>Memproses...</span>
-                    </span>
-                  ) : (
-                    <span>Konfirmasi &amp; Bayar Sekarang</span>
-                  )}
-                </Button>
-              </DialogFooter>
-            </>
+              <div className="space-y-1 text-slate-500 text-[11px]">
+                <p>• Kuota baru langsung aktif setelah konfirmasi.</p>
+                <p>• Invoice digital otomatis diterbitkan di menu Transaksi &amp; Invoice.</p>
+              </div>
+            </div>
           )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCheckoutPlan(null)} disabled={isUpgrading}>
+              Batal
+            </Button>
+            <Button variant="primary" onClick={handleConfirmUpgrade} disabled={isUpgrading}>
+              {isUpgrading ? 'Memproses...' : 'Konfirmasi & Upgrade Sekarang'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </motion.div>

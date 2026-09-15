@@ -32,16 +32,31 @@ class SubscriptionPlanController extends Controller
     {
         $validated = $request->validate([
             'name'           => 'required|string|max:255',
+            'description'    => 'nullable|string',
             'price'          => 'required|numeric|min:0',
-            'billing_cycle'  => 'required|in:monthly,yearly',
-            'duration_days'  => 'required|integer|min:1',
-            'max_events'     => 'required|integer|min:1',
-            'max_storage_gb' => 'required|numeric|min:1',
+            'billing_period' => 'nullable|in:monthly,yearly',
+            'billing_cycle'  => 'nullable|in:monthly,yearly',
+            'max_events'     => 'nullable|integer|min:0',
+            'max_sessions'   => 'nullable|integer|min:0',
+            'max_templates'  => 'nullable|integer|min:0',
+            'max_storage_mb' => 'nullable|numeric|min:0',
+            'max_storage_gb' => 'nullable|numeric|min:0',
+            'max_operators'  => 'nullable|integer|min:0',
             'features_json'  => 'nullable|array',
-            'is_active'      => 'boolean',
+            'status'         => 'nullable|in:active,inactive',
+            'is_active'      => 'nullable|boolean',
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
+        if (isset($validated['billing_cycle']) && !isset($validated['billing_period'])) {
+            $validated['billing_period'] = $validated['billing_cycle'];
+        }
+        if (isset($validated['max_storage_gb']) && !isset($validated['max_storage_mb'])) {
+            $validated['max_storage_mb'] = (int) ($validated['max_storage_gb'] * 1024);
+        }
+        if (isset($validated['is_active']) && !isset($validated['status'])) {
+            $validated['status'] = $validated['is_active'] ? 'active' : 'inactive';
+        }
 
         $plan = SubscriptionPlan::create($validated);
 
@@ -74,14 +89,33 @@ class SubscriptionPlanController extends Controller
 
         $validated = $request->validate([
             'name'           => 'sometimes|required|string|max:255',
+            'description'    => 'nullable|string',
             'price'          => 'sometimes|required|numeric|min:0',
-            'billing_cycle'  => 'sometimes|required|in:monthly,yearly',
-            'duration_days'  => 'sometimes|required|integer|min:1',
-            'max_events'     => 'sometimes|required|integer|min:1',
-            'max_storage_gb' => 'sometimes|required|numeric|min:1',
+            'billing_period' => 'nullable|in:monthly,yearly',
+            'billing_cycle'  => 'nullable|in:monthly,yearly',
+            'max_events'     => 'nullable|integer|min:0',
+            'max_sessions'   => 'nullable|integer|min:0',
+            'max_templates'  => 'nullable|integer|min:0',
+            'max_storage_mb' => 'nullable|numeric|min:0',
+            'max_storage_gb' => 'nullable|numeric|min:0',
+            'max_operators'  => 'nullable|integer|min:0',
             'features_json'  => 'nullable|array',
-            'is_active'      => 'boolean',
+            'status'         => 'nullable|in:active,inactive',
+            'is_active'      => 'nullable|boolean',
         ]);
+
+        if (isset($validated['name'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+        if (isset($validated['billing_cycle']) && !isset($validated['billing_period'])) {
+            $validated['billing_period'] = $validated['billing_cycle'];
+        }
+        if (isset($validated['max_storage_gb']) && !isset($validated['max_storage_mb'])) {
+            $validated['max_storage_mb'] = (int) ($validated['max_storage_gb'] * 1024);
+        }
+        if (isset($validated['is_active']) && !isset($validated['status'])) {
+            $validated['status'] = $validated['is_active'] ? 'active' : 'inactive';
+        }
 
         $plan->update($validated);
 

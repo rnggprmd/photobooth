@@ -56,6 +56,9 @@ export const superAdminApi = {
   updateTenantStatus: (id: number | string, status: 'active' | 'suspended') =>
     apiClient.patch(`/superadmin/tenants/${id}/status`, { status }),
   getPlans: () => apiClient.get('/superadmin/subscription-plans'),
+  createPlan: (data: Record<string, unknown>) => apiClient.post('/superadmin/subscription-plans', data),
+  updatePlan: (id: number | string, data: Record<string, unknown>) => apiClient.put(`/superadmin/subscription-plans/${id}`, data),
+  deletePlan: (id: number | string) => apiClient.delete(`/superadmin/subscription-plans/${id}`),
 };
 
 export default superAdminApi;

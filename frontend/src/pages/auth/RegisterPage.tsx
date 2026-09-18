@@ -29,7 +29,7 @@ export const RegisterPage: React.FC = () => {
         password,
         password_confirmation: passwordConfirmation,
       });
-      navigate('/');
+      navigate('/admin');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registrasi studio gagal. Silakan coba kembali.');
     } finally {

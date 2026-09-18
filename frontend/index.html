@@ -7,16 +7,28 @@
     <title>SnapStudio - Precision Booth Ops</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
         theme: {
           extend: {
             colors: {
+              "brand-indigo-vibrant": "#6366f1",
+              "brand-indigo-deep": "#4f46e5",
+              "brand-indigo-glow": "#818cf8",
+              "brand-indigo-subtle": "rgba(99, 102, 241, 0.08)",
+              "accent-coral": "#f43f5e",
+              "accent-coral-bright": "#fb7185",
+              "accent-coral-subtle": "rgba(244, 63, 94, 0.10)",
+              "accent-amber": "#fbbf24",
+              "status-ready": "#22c55e",
+              "status-success": "#10b981",
+              "status-error": "#ef4444",
+              "studio-black": "#090a0f",
               "primary": "#4f46e5",
               "primary-container": "#4f46e5",
               "on-primary": "#ffffff",
@@ -91,14 +103,23 @@
               "space-xs": "0.5rem"
             },
             fontFamily: {
-              "body-sm": ["Geist", "sans-serif"],
-              "headline-lg": ["Geist", "sans-serif"],
-              "body-lg": ["Geist", "sans-serif"],
+              "body-sm": ["Inter", "Geist", "sans-serif"],
+              "body-md": ["Inter", "Geist", "sans-serif"],
+              "body-lg": ["Inter", "Geist", "sans-serif"],
+              "heading-xl": ["Space Grotesk", "sans-serif"],
+              "heading-lg": ["Space Grotesk", "sans-serif"],
+              "heading-md": ["Inter", "sans-serif"],
+              "display-xl": ["Space Grotesk", "sans-serif"],
+              "display-lg": ["Space Grotesk", "sans-serif"],
+              "display-md": ["Space Grotesk", "sans-serif"],
+              "button-md": ["Inter", "sans-serif"],
+              "button-lg": ["Inter", "sans-serif"],
+              "caption-md": ["Inter", "sans-serif"],
+              "caption-sm": ["Inter", "sans-serif"],
               "label-md": ["Geist", "sans-serif"],
-              "display": ["Geist", "sans-serif"],
+              "display": ["Space Grotesk", "Geist", "sans-serif"],
               "mono-data": ["Geist", "monospace"],
               "headline-sm": ["Geist", "sans-serif"],
-              "body-md": ["Geist", "sans-serif"],
               "label-sm": ["Geist", "sans-serif"],
               "headline-md": ["Geist", "sans-serif"],
               "headline-lg-mobile": ["Geist", "sans-serif"]

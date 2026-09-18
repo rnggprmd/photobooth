@@ -102,33 +102,33 @@ export const AppLayout: React.FC = () => {
         {
           title: 'Utama',
           items: [
-            { label: 'Platform Dashboard', path: '/', icon: 'space_dashboard' },
-            { label: 'Ringkasan Telemetri Global', path: '/reports', icon: 'insights' },
+            { label: 'Platform Dashboard', path: '/admin', icon: 'space_dashboard' },
+            { label: 'Ringkasan Telemetri Global', path: '/admin/reports', icon: 'insights' },
           ],
         },
         {
           title: 'Manajemen Tenant & Paket',
           items: [
-            { label: 'Kelola Armada Tenant', path: '/superadmin/tenants', icon: 'apartment' },
-            { label: 'Master Paket Langganan', path: '/superadmin/plans', icon: 'admin_panel_settings' },
-            { label: 'Event Seluruh Studio', path: '/events', icon: 'calendar_month' },
-            { label: 'Template & Frame Global', path: '/templates', icon: 'crop_portrait' },
-            { label: 'Database Kru & Tamu', path: '/customers', icon: 'badge' },
+            { label: 'Kelola Armada Tenant', path: '/admin/superadmin/tenants', icon: 'apartment' },
+            { label: 'Master Paket Langganan', path: '/admin/superadmin/plans', icon: 'admin_panel_settings' },
+            { label: 'Event Seluruh Studio', path: '/admin/events', icon: 'calendar_month' },
+            { label: 'Template & Frame Global', path: '/admin/templates', icon: 'crop_portrait' },
+            { label: 'Database Kru & Tamu', path: '/admin/customers', icon: 'badge' },
           ],
         },
         {
           title: 'Sesi & Galeri Global',
           items: [
-            { label: 'Monitoring Sesi Global', path: '/sessions', icon: 'live_tv' },
-            { label: 'Galeri Foto Semua Tenant', path: '/gallery', icon: 'qr_code_scanner' },
-            { label: 'Hardware Fleet Kiosk', path: '/settings?tab=hardware', icon: 'print' },
+            { label: 'Monitoring Sesi Global', path: '/admin/sessions', icon: 'live_tv' },
+            { label: 'Galeri Foto Semua Tenant', path: '/admin/gallery', icon: 'qr_code_scanner' },
+            { label: 'Hardware Fleet Kiosk', path: '/admin/settings?tab=hardware', icon: 'print' },
           ],
         },
         {
           title: 'Finansial & Konfigurasi',
           items: [
-            { label: 'Transaksi & Billing SaaS', path: '/transactions', icon: 'receipt_long' },
-            { label: 'Pengaturan Platform', path: '/settings?tab=tenant', icon: 'settings' },
+            { label: 'Transaksi & Billing SaaS', path: '/admin/transactions', icon: 'receipt_long' },
+            { label: 'Pengaturan Platform', path: '/admin/settings?tab=tenant', icon: 'settings' },
           ],
         },
       ]
@@ -136,33 +136,33 @@ export const AppLayout: React.FC = () => {
         {
           title: 'Utama',
           items: [
-            { label: 'Dashboard', path: '/', icon: 'space_dashboard' },
-            { label: 'Ringkasan Operasional', path: '/reports', icon: 'insights' },
+            { label: 'Dashboard', path: '/admin', icon: 'space_dashboard' },
+            { label: 'Ringkasan Operasional', path: '/admin/reports', icon: 'insights' },
           ],
         },
         {
           title: 'Manajemen Bisnis',
           items: [
-            { label: 'Event & Jadwal', path: '/events', icon: 'calendar_month' },
-            { label: 'Paket Layanan', path: '/packages', icon: 'loyalty' },
-            { label: 'Template & Frame Studio', path: '/templates', icon: 'crop_portrait' },
-            { label: 'Kelola Operator & Tamu', path: '/customers', icon: 'badge' },
+            { label: 'Event & Jadwal', path: '/admin/events', icon: 'calendar_month' },
+            { label: 'Paket Layanan', path: '/admin/packages', icon: 'loyalty' },
+            { label: 'Template & Frame Studio', path: '/admin/templates', icon: 'crop_portrait' },
+            { label: 'Kelola Operator & Tamu', path: '/admin/customers', icon: 'badge' },
           ],
         },
         {
           title: 'Sesi & Galeri',
           items: [
-            { label: 'Sesi Photobooth Aktif', path: '/sessions', icon: 'live_tv' },
-            { label: 'Galeri Foto & QR', path: '/gallery', icon: 'qr_code_scanner' },
-            { label: 'Cetak & Hardware', path: '/settings?tab=hardware', icon: 'print' },
+            { label: 'Sesi Photobooth Aktif', path: '/admin/sessions', icon: 'live_tv' },
+            { label: 'Galeri Foto & QR', path: '/admin/gallery', icon: 'qr_code_scanner' },
+            { label: 'Cetak & Hardware', path: '/admin/settings?tab=hardware', icon: 'print' },
           ],
         },
         {
           title: 'Finansial & Akun',
           items: [
-            { label: 'Transaksi & Invoice', path: '/transactions', icon: 'receipt_long' },
-            { label: 'Paket Langganan Studio', path: '/subscription', icon: 'stars' },
-            { label: 'Pengaturan Tenant', path: '/settings?tab=tenant', icon: 'settings' },
+            { label: 'Transaksi & Invoice', path: '/admin/transactions', icon: 'receipt_long' },
+            { label: 'Paket Langganan Studio', path: '/admin/subscription', icon: 'stars' },
+            { label: 'Pengaturan Tenant', path: '/admin/settings?tab=tenant', icon: 'settings' },
           ],
         },
       ];
@@ -220,13 +220,13 @@ export const AppLayout: React.FC = () => {
               {group.items.map((item) => {
                 const isSamePath = item.path.split('?')[0];
                 const itemQuery = item.path.includes('?') ? item.path.split('?')[1] : null;
-                const isActive =
-                  item.path === '/'
-                    ? location.pathname === '/'
-                    : itemQuery
-                    ? location.pathname === isSamePath &&
-                      (location.search.includes(itemQuery) || (!location.search && itemQuery === 'hardware'))
-                    : location.pathname.startsWith(isSamePath);
+                const isDashboard = item.path === '/admin';
+                const isActive = isDashboard
+                  ? location.pathname === '/admin' || location.pathname === '/admin/' || location.pathname === '/admin/dashboard'
+                  : itemQuery
+                  ? location.pathname === isSamePath &&
+                    (location.search.includes(itemQuery) || (!location.search && itemQuery === 'hardware'))
+                  : location.pathname.startsWith(isSamePath);
 
                 return (
                   <Link
@@ -248,10 +248,17 @@ export const AppLayout: React.FC = () => {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-3 bg-slate-50/80 border-t border-slate-200">
-          <div className="flex items-center justify-between px-2 py-1 text-slate-400 text-xs">
+        <div className="p-3 bg-slate-50/80 border-t border-slate-200 space-y-2">
+          <Link
+            to="/"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs transition-colors"
+          >
+            <span className="material-symbols-outlined text-[16px]">public</span>
+            <span>Lihat Landing Page</span>
+          </Link>
+          <div className="flex items-center justify-between px-2 text-slate-400 text-xs">
             <span className="font-mono text-[11px] text-slate-500">SnapStudio v2.4</span>
-            <Link to="/settings" className="text-[11px] text-slate-500 hover:text-slate-800 transition-colors">
+            <Link to="/admin/settings" className="text-[11px] text-slate-500 hover:text-slate-800 transition-colors">
               Pengaturan
             </Link>
           </div>
@@ -275,7 +282,7 @@ export const AppLayout: React.FC = () => {
           <div className="flex items-center gap-3.5">
             {isSuperAdmin ? (
               <Link
-                to="/superadmin/tenants"
+                to="/admin/superadmin/tenants"
                 className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
               >
                 <span className="material-symbols-outlined text-[16px]">domain</span>
@@ -407,7 +414,7 @@ export const AppLayout: React.FC = () => {
 
                   <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
                     <Link
-                      to="/reports"
+                      to="/admin/reports"
                       onClick={() => setNotificationsOpen(false)}
                       className="text-[11px] font-semibold text-indigo-600 hover:underline inline-flex items-center gap-1"
                     >
@@ -446,7 +453,7 @@ export const AppLayout: React.FC = () => {
                     <p className="text-[11px] text-slate-500 truncate mt-0.5">{user?.email || 'admin@photobooth.test'}</p>
                   </div>
                   <Link
-                    to="/settings"
+                    to="/admin/settings"
                     onClick={() => setUserMenuOpen(false)}
                     className="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50"
                   >

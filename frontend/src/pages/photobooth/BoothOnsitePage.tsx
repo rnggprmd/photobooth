@@ -91,36 +91,46 @@ export const BoothOnsitePage: React.FC = () => {
         </div>
       )}
 
-      {/* Kiosk Top Bar */}
-      <header className="flex items-center justify-between pb-6 border-b border-slate-800/80">
+      {/* Kiosk Top Bar (Clean & Professional) */}
+      <header className="flex items-center justify-between pb-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
             <span className="material-symbols-outlined text-xl">photo_camera</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-base text-white tracking-tight">SnapStudio Kiosk Terminal</span>
-              <Badge variant="success" className="font-mono text-[10px] py-0 px-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span>
+              <span className="font-bold text-base text-white tracking-tight">BoothFlow Kiosk Terminal</span>
+              <Badge variant="success" className="font-mono text-[10px] py-0.5 px-2.5 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 ON-SITE LIVE
               </Badge>
             </div>
-            <p className="text-xs text-slate-400 font-mono">DNP DS620 Ready • Canon R100 Tethered (300 DPI)</p>
+            <p className="text-xs text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+              <span>Canon R100 (300 DPI)</span>
+              <span>•</span>
+              <span>DNP DS620 Ready</span>
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-400">
-            <span>Latency: <strong className="text-emerald-400">12ms</strong></span>
-            <span>•</span>
-            <span>Paper: <strong className="text-white">362/400</strong></span>
+        <div className="flex items-center gap-2.5">
+          <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs font-mono text-slate-400 shadow-inner">
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px] text-emerald-400">speed</span>
+              <span>Latency: <strong className="text-emerald-400 tabular-nums">12ms</strong></span>
+            </span>
+            <span className="text-slate-700">•</span>
+            <span className="flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px] text-indigo-400">print</span>
+              <span>Kertas: <strong className="text-white tabular-nums">362/400</strong></span>
+            </span>
           </div>
           <Link
-            to="/"
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5 border border-slate-700"
+            to="/admin"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 border border-slate-800 active:scale-95 shadow-xs"
           >
-            <span className="material-symbols-outlined text-sm">arrow_back</span>
-            Exit to Dashboard
+            <span className="material-symbols-outlined text-sm text-slate-400">arrow_back</span>
+            <span>Kembali ke Admin</span>
           </Link>
         </div>
       </header>

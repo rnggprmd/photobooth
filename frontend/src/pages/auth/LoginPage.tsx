@@ -88,7 +88,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
     try {
       await login({ email, password });
-      navigate('/');
+      navigate('/admin');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Autentikasi gagal. Periksa kembali email dan kata sandi Anda.');
     } finally {

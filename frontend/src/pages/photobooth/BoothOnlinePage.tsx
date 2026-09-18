@@ -53,31 +53,32 @@ export const BoothOnlinePage: React.FC = () => {
         </div>
       )}
 
-      {/* Online Top Bar */}
-      <header className="flex items-center justify-between pb-6 border-b border-slate-800/80">
+      {/* Online Top Bar (Clean & Modern) */}
+      <header className="flex items-center justify-between pb-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white shadow-lg shadow-purple-600/30">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-600/30">
             <span className="material-symbols-outlined text-xl">language</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-base text-white tracking-tight">SnapStudio Online Virtual Booth</span>
-              <Badge variant="indigo" className="font-mono text-[10px] py-0 px-2 bg-purple-500/20 text-purple-300 border-purple-500/30">
+              <span className="font-bold text-base text-white tracking-tight">BoothFlow Online Virtual Booth</span>
+              <Badge variant="indigo" className="font-mono text-[10px] py-0.5 px-2.5 bg-purple-500/20 text-purple-300 border-purple-500/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse"></span>
                 WEB BOOTH
               </Badge>
             </div>
-            <p className="text-xs text-slate-400 font-mono">
-              Event: {eventInfo?.name || slug || 'demo-event'}
+            <p className="text-xs text-slate-400 font-mono mt-0.5">
+              Event Aktif: <span className="text-slate-200 font-semibold">{eventInfo?.name || slug || 'demo-event'}</span>
             </p>
           </div>
         </div>
 
         <Link
-          to="/"
-          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-colors flex items-center gap-1.5 border border-slate-700"
+          to="/admin"
+          className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 border border-slate-800 active:scale-95 shadow-xs"
         >
-          <span className="material-symbols-outlined text-sm">arrow_back</span>
-          Exit to Dashboard
+          <span className="material-symbols-outlined text-sm text-slate-400">arrow_back</span>
+          <span>Kembali ke Admin</span>
         </Link>
       </header>
 

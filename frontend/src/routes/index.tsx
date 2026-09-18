@@ -26,13 +26,28 @@ import SuperAdminTenantsPage from '../pages/superadmin/TenantsPage';
 import SuperAdminPlansPage from '../pages/superadmin/PlansPage';
 import SuperAdminDashboardPage from '../pages/superadmin/DashboardPage';
 
+import LandingPage from '../pages/landing/LandingPage';
+
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
-  // Main Dashboard App
+  // Public Landing Page
   {
     path: '/',
+    element: <LandingPage />,
+  },
+
+  // Alias /dashboard -> /admin for backward compatibility
+  {
+    path: '/dashboard',
+    element: <Navigate to="/admin" replace />,
+  },
+
+  // Admin Console & Studio Operations
+  {
+    path: '/admin',
     element: <AppLayout />,
     children: [
       { index: true, element: <DashboardPage /> },
+      { path: 'dashboard', element: <DashboardPage /> },
       { path: 'events', element: <EventsPage /> },
       { path: 'templates', element: <TemplatesPage /> },
       { path: 'packages', element: <PackagesPage /> },

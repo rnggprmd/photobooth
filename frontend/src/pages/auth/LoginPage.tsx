@@ -10,13 +10,13 @@ import {
   HelpCircle,
   AlertCircle,
   KeyRound,
+  ArrowRight,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 
 interface DemoPersona {
   id: string;
   roleName: string;
-  badge: string;
   email: string;
   desc: string;
 }
@@ -25,23 +25,20 @@ const DEMO_PERSONAS: DemoPersona[] = [
   {
     id: 'tenant',
     roleName: 'Studio Owner',
-    badge: 'Tenant Admin',
     email: 'tenant@photobooth.test',
-    desc: 'Lumina Wedding Studio',
+    desc: 'Lumina Studio',
   },
   {
     id: 'operator',
     roleName: 'Kru On-Site',
-    badge: 'Booth Kru',
     email: 'operator@photobooth.test',
-    desc: 'Canon EOS & DNP DS620',
+    desc: 'Kiosk & Cetak',
   },
   {
     id: 'superadmin',
     roleName: 'Super Admin',
-    badge: 'Platform Root',
     email: 'superadmin@photobooth.test',
-    desc: 'Platform Core & Billing',
+    desc: 'Platform Core',
   },
 ];
 
@@ -109,20 +106,15 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="p-3.5 sm:p-5 space-y-3">
-      {/* 1. Header Row - Clean & Symmetrical */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
-            Masuk ke Konsol
-          </h2>
-          <p className="text-xs text-stone-500 mt-0.5">
-            Photobooth pernikahan, kiosk armada &amp; cetak kilat.
-          </p>
-        </div>
-        <span className="text-[10px] font-mono font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md border border-stone-200 shrink-0">
-          v2.4
-        </span>
+    <div className="p-4 sm:p-5 space-y-3.5">
+      {/* 1. Header Row - Clean & Human Typography (No AI badges) */}
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold text-stone-950 tracking-tight">
+          Masuk ke Konsol
+        </h2>
+        <p className="text-xs text-stone-500 mt-0.5">
+          Akses manajemen photobooth, kiosk on-site &amp; armada printer.
+        </p>
       </div>
 
       {/* 2. Error Alert Box */}
@@ -150,14 +142,14 @@ export const LoginPage: React.FC = () => {
           transition={{ duration: 0.2 }}
           className="space-y-4"
         >
-          {/* Quick Account Switcher (Neat Segmented Control) */}
+          {/* Quick Account Switcher (Tactile Segmented Profile Control) */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
               <span className="text-[11px] font-medium text-stone-600">
-                Pilih Akun Demo (1-Klik):
+                Pilih Profil Akses:
               </span>
-              <span className="text-[10.5px] text-stone-400 font-mono bg-stone-100 px-1.5 py-0.2 rounded border border-stone-200">
-                Sandi: password
+              <span className="text-[11px] text-stone-500 font-mono">
+                Sandi: <strong className="text-stone-800">password</strong>
               </span>
             </div>
 
@@ -169,28 +161,28 @@ export const LoginPage: React.FC = () => {
                     key={p.id}
                     type="button"
                     onClick={() => handleSelectPersona(p)}
-                    className="relative py-1.5 px-1 rounded-lg text-center cursor-pointer transition-colors z-10"
+                    className="relative py-2 px-1 rounded-lg text-center cursor-pointer transition-colors z-10"
                   >
                     {isSelected && (
                       <motion.div
                         layoutId="activePersonaPill"
                         transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                        className="absolute inset-0 bg-white rounded-lg shadow-xs border border-stone-200/90 -z-10"
+                        className="absolute inset-0 bg-white rounded-lg shadow-xs border border-stone-300 -z-10"
                       />
                     )}
                     <span
                       className={`block text-xs font-bold leading-tight transition-colors ${
-                        isSelected ? 'text-stone-900' : 'text-stone-500 hover:text-stone-800'
+                        isSelected ? 'text-stone-950' : 'text-stone-600 hover:text-stone-900'
                       }`}
                     >
                       {p.roleName}
                     </span>
                     <span
-                      className={`block text-[9.5px] mt-0.5 font-medium transition-colors ${
-                        isSelected ? 'text-amber-800' : 'text-stone-400'
+                      className={`block text-[10px] mt-0.5 transition-colors ${
+                        isSelected ? 'text-amber-800 font-medium' : 'text-stone-400'
                       }`}
                     >
-                      {p.badge}
+                      {p.desc}
                     </span>
                   </button>
                 );
@@ -215,7 +207,7 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@studio.com"
                   required
-                  className="w-full pl-8 pr-3 py-1.5 sm:py-2 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 placeholder:text-stone-400 text-xs sm:text-sm transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
+                  className="w-full pl-8 pr-3 py-1.5 sm:py-2 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-950 focus:ring-2 focus:ring-amber-400/25 text-stone-900 placeholder:text-stone-400 text-xs sm:text-sm transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
                 />
               </div>
             </div>
@@ -228,8 +220,8 @@ export const LoginPage: React.FC = () => {
                     Kata Sandi
                   </label>
                   {capsLockActive && (
-                    <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 py-0.2 rounded uppercase">
-                      Caps Lock Aktif
+                    <span className="text-[10px] text-amber-700 font-medium">
+                      Caps Lock aktif
                     </span>
                   )}
                 </div>
@@ -253,7 +245,7 @@ export const LoginPage: React.FC = () => {
                   onKeyUp={checkCapsLock}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-8 pr-8 py-1.5 sm:py-2 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 placeholder:text-stone-400 text-xs sm:text-sm transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
+                  className="w-full pl-8 pr-8 py-1.5 sm:py-2 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-950 focus:ring-2 focus:ring-amber-400/25 text-stone-900 placeholder:text-stone-400 text-xs sm:text-sm transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
                 />
                 <button
                   type="button"
@@ -273,7 +265,7 @@ export const LoginPage: React.FC = () => {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-stone-300 text-stone-900 focus:ring-stone-800 accent-stone-900 cursor-pointer"
+                className="w-3.5 h-3.5 rounded border-stone-300 text-stone-950 focus:ring-amber-400 accent-stone-950 cursor-pointer"
               />
               <label htmlFor="remember-me" className="text-[11px] text-stone-600 select-none cursor-pointer">
                 Ingat sesi masuk di perangkat ini
@@ -286,7 +278,7 @@ export const LoginPage: React.FC = () => {
               disabled={loading}
               whileHover={{ scale: loading ? 1 : 1.008 }}
               whileTap={{ scale: loading ? 1 : 0.985 }}
-              className="w-full mt-1.5 py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-black active:bg-stone-950 text-white font-semibold text-xs sm:text-sm shadow-[0_2px_4px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-stone-950 hover:bg-black active:bg-stone-900 text-white font-semibold text-xs sm:text-sm shadow-[0_4px_14px_-2px_rgba(28,25,23,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 <>
@@ -294,7 +286,10 @@ export const LoginPage: React.FC = () => {
                   <span>Memverifikasi Akses...</span>
                 </>
               ) : (
-                <span>Masuk ke Konsol Studio</span>
+                <>
+                  <span>Masuk ke Konsol Studio</span>
+                  <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+                </>
               )}
             </motion.button>
           </form>
@@ -307,7 +302,7 @@ export const LoginPage: React.FC = () => {
                 setAuthMode('kiosk_pin');
                 setError(null);
               }}
-              className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors cursor-pointer font-medium"
+              className="text-[11px] text-stone-500 hover:text-stone-950 transition-colors cursor-pointer font-medium hover:underline underline-offset-2 decoration-amber-400"
             >
               Operator lapangan? Masuk dengan PIN Kiosk →
             </button>
@@ -324,50 +319,70 @@ export const LoginPage: React.FC = () => {
           transition={{ duration: 0.2 }}
           className="space-y-3.5 py-1"
         >
-          <div className="p-3 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-stone-200 flex items-center justify-center text-stone-700">
-                <KeyRound className="w-3.5 h-3.5" />
-              </div>
-              <div>
-                <span className="font-semibold text-stone-800 text-xs block">
-                  Mode Kru Lapangan
-                </span>
-                <span className="text-[10px] text-stone-500">
-                  Kamera Canon EOS &amp; printer DNP DS620
-                </span>
-              </div>
+          <div className="p-3 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-stone-200/80 flex items-center justify-center text-stone-800 shrink-0">
+              <KeyRound className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
-              Kiosk Ready
-            </span>
+            <div>
+              <span className="font-semibold text-stone-900 text-xs block">
+                Mode Kru On-Site
+              </span>
+              <span className="text-[10.5px] text-stone-500">
+                Akses cepat stan foto tanpa email
+              </span>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-[11px] font-semibold text-stone-700 mb-1.5 text-center">
-                PIN Operator Kiosk (4-Digit)
+              <label className="block text-[11px] font-semibold text-stone-700 mb-2 text-center">
+                Masukkan PIN Operator (4-Digit)
               </label>
+
+              {/* Interactive 4-Box PIN Display */}
+              <div className="flex justify-center gap-2 mb-2">
+                {[0, 1, 2, 3].map((idx) => {
+                  const digit = kioskPin[idx];
+                  const isActive = kioskPin.length === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className={`w-10 h-12 rounded-xl flex items-center justify-center font-mono font-bold text-lg transition-all ${
+                        digit
+                          ? 'bg-white border-2 border-stone-900 text-stone-900 shadow-2xs'
+                          : isActive
+                          ? 'bg-white border-2 border-amber-500 shadow-xs ring-2 ring-amber-400/20'
+                          : 'bg-stone-50 border border-stone-200 text-stone-300'
+                      }`}
+                    >
+                      {digit ? '●' : ''}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Hidden real input for mobile keyboard / typing */}
               <div className="flex justify-center">
                 <input
                   type="password"
-                  maxLength={6}
+                  maxLength={4}
                   value={kioskPin}
-                  onChange={(e) => setKioskPin(e.target.value)}
-                  placeholder="2 0 2 6"
+                  onChange={(e) => setKioskPin(e.target.value.replace(/\D/g, ''))}
+                  placeholder="Ketik 4-digit PIN"
                   autoFocus
-                  className="w-40 text-center tracking-[0.5em] font-mono font-bold text-lg py-2 rounded-xl bg-stone-50 border border-stone-200 focus:bg-white focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]"
+                  className="w-48 text-center font-mono text-xs py-1.5 rounded-lg bg-stone-50/70 border border-stone-200 focus:bg-white focus:border-stone-950 focus:ring-1 focus:ring-stone-950 text-stone-900"
                 />
               </div>
-              <div className="flex justify-center gap-2 mt-2">
+
+              <div className="flex justify-center gap-3 mt-2.5">
                 {['2026', '1234'].map((demoPin) => (
                   <button
                     key={demoPin}
                     type="button"
                     onClick={() => setKioskPin(demoPin)}
-                    className="text-[10px] font-mono text-stone-500 bg-stone-100 hover:bg-stone-200 px-2 py-0.5 rounded border border-stone-200/70 transition-colors cursor-pointer"
+                    className="text-xs text-stone-500 hover:text-stone-950 transition-colors cursor-pointer hover:underline underline-offset-2 decoration-amber-400"
                   >
-                    Pakai PIN demo: {demoPin}
+                    Gunakan PIN <strong className="font-mono">{demoPin}</strong>
                   </button>
                 ))}
               </div>
@@ -378,7 +393,7 @@ export const LoginPage: React.FC = () => {
               disabled={loading || kioskPin.length < 4}
               whileHover={{ scale: loading ? 1 : 1.008 }}
               whileTap={{ scale: loading ? 1 : 0.985 }}
-              className="w-full py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-black text-white font-semibold text-xs sm:text-sm shadow-[0_2px_4px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-stone-950 hover:bg-black text-white font-semibold text-xs sm:text-sm shadow-[0_4px_14px_-2px_rgba(28,25,23,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 <>
@@ -386,7 +401,10 @@ export const LoginPage: React.FC = () => {
                   <span>Membuka Kiosk...</span>
                 </>
               ) : (
-                <span>Buka Antarmuka Stan On-Site</span>
+                <>
+                  <span>Buka Antarmuka Stan On-Site</span>
+                  <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+                </>
               )}
             </motion.button>
           </form>
@@ -399,7 +417,7 @@ export const LoginPage: React.FC = () => {
                 setAuthMode('credentials');
                 setError(null);
               }}
-              className="text-[11px] text-stone-500 hover:text-stone-800 transition-colors cursor-pointer font-medium"
+              className="text-[11px] text-stone-500 hover:text-stone-950 transition-colors cursor-pointer font-medium hover:underline underline-offset-2 decoration-amber-400"
             >
               ← Kembali ke login akun studio
             </button>
@@ -413,7 +431,7 @@ export const LoginPage: React.FC = () => {
           Belum memiliki akun studio?{' '}
           <Link
             to="/auth/register"
-            className="font-semibold text-stone-900 hover:text-black underline underline-offset-2 transition-colors"
+            className="font-semibold text-stone-950 hover:text-black underline underline-offset-4 decoration-amber-400 hover:decoration-amber-500 transition-colors"
           >
             Daftarkan Studio Baru
           </Link>

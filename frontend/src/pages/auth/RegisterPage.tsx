@@ -9,6 +9,8 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 
@@ -30,16 +32,6 @@ export const RegisterPage: React.FC = () => {
     setTenantName(`Aura Wedding Studio ${randomId}`);
     setName('Dimas Pratama');
     setEmail(`owner${randomId}@aurastudio.test`);
-    setPassword('password');
-    setPasswordConfirmation('password');
-    setError(null);
-  };
-
-  const handleCategoryPreset = (categoryName: string) => {
-    const randomId = Math.floor(100 + Math.random() * 900);
-    setTenantName(`${categoryName} ${randomId}`);
-    if (!name) setName('Rangga Pramudya');
-    if (!email) setEmail(`studio${randomId}@photobooth.test`);
     setPassword('password');
     setPasswordConfirmation('password');
     setError(null);
@@ -78,45 +70,27 @@ export const RegisterPage: React.FC = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
-      className="p-3.5 sm:p-5 space-y-2 sm:space-y-2.5"
+      className="p-4 sm:p-5 space-y-3"
     >
-      {/* 1. Header Row - Clean & Compact */}
-      <div className="flex items-start justify-between">
+      {/* 1. Header Row - Clean Typography & Subtle Action (No AI badges) */}
+      <div className="flex items-start justify-between pb-1">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-stone-900 tracking-tight leading-none">
+          <h2 className="text-base sm:text-lg font-bold text-stone-950 tracking-tight leading-none">
             Daftarkan Studio Baru
           </h2>
-          <p className="text-[11px] text-stone-500 mt-1">
+          <p className="text-[11.5px] text-stone-500 mt-1">
             Kelola photobooth, kiosk on-site &amp; armada printer.
           </p>
         </div>
         <button
           type="button"
           onClick={handleQuickFillDemo}
-          title="Isi otomatis formulir dengan data contoh studio"
-          className="text-[10px] font-mono font-medium text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-2 py-0.5 rounded-md border border-stone-200/80 transition-colors cursor-pointer shrink-0"
+          title="Isi otomatis dengan data contoh studio"
+          className="text-xs font-medium text-stone-600 hover:text-stone-950 hover:underline underline-offset-4 decoration-amber-400 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
         >
-          Isi Cepat
+          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+          <span>Isi Contoh</span>
         </button>
-      </div>
-
-      {/* Quick Studio Preset Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 no-scrollbar text-[10px]">
-        <span className="text-stone-600 text-[10px] shrink-0 font-medium">Format:</span>
-        {[
-          { label: 'Wedding Kiosk', title: 'Lumina Wedding Kiosk' },
-          { label: 'Self-Photo Studio', title: 'Aura Self-Photo' },
-          { label: '360 Glamour', title: 'Orbit 360 Event' },
-        ].map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            onClick={() => handleCategoryPreset(item.title)}
-            className="px-2 py-0.5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 border border-stone-200/60 transition-colors whitespace-nowrap cursor-pointer text-[10px]"
-          >
-            {item.label}
-          </button>
-        ))}
       </div>
 
       {/* 2. Error Alert Box */}
@@ -152,7 +126,7 @@ export const RegisterPage: React.FC = () => {
               onChange={(e) => setTenantName(e.target.value)}
               placeholder="Contoh: Lumina Photostudio & Co."
               required
-              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-950 focus:ring-2 focus:ring-amber-400/25 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
             />
           </div>
         </div>
@@ -174,7 +148,7 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nama penanggung jawab"
                 required
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-950 focus:ring-2 focus:ring-amber-400/25 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
               />
             </div>
           </div>
@@ -194,13 +168,13 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="owner@studio.com"
                 required
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-950 focus:ring-2 focus:ring-amber-400/25 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
               />
             </div>
           </div>
         </div>
 
-        {/* Passwords - Always Side-by-Side 2-Column Grid on Both Mobile & Desktop! */}
+        {/* Passwords - Side-by-Side 2-Column Grid */}
         <div className="grid grid-cols-2 gap-2">
           {/* Password */}
           <div>
@@ -217,7 +191,7 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
+                className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-950 focus:ring-2 focus:ring-amber-400/25 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
               />
               <button
                 type="button"
@@ -245,7 +219,7 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setPasswordConfirmation(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-900 focus:ring-1 focus:ring-stone-900 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-50/70 hover:bg-stone-50/40 focus:bg-white border border-stone-200 focus:border-stone-950 focus:ring-2 focus:ring-amber-400/25 text-stone-900 placeholder:text-stone-400 text-xs transition-all shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)] font-sans"
               />
             </div>
           </div>
@@ -258,7 +232,7 @@ export const RegisterPage: React.FC = () => {
             type="checkbox"
             checked={agreeTerms}
             onChange={(e) => setAgreeTerms(e.target.checked)}
-            className="w-3.5 h-3.5 rounded border-stone-300 text-stone-900 focus:ring-stone-800 accent-stone-900 cursor-pointer shrink-0"
+            className="w-3.5 h-3.5 rounded border-stone-300 text-stone-950 focus:ring-amber-400 accent-stone-950 cursor-pointer shrink-0"
           />
           <label htmlFor="agree-terms" className="text-[10.5px] text-stone-600 select-none cursor-pointer leading-tight">
             Saya menyetujui ketentuan operasional studio photobooth
@@ -271,7 +245,7 @@ export const RegisterPage: React.FC = () => {
           disabled={loading}
           whileHover={{ scale: loading ? 1 : 1.008 }}
           whileTap={{ scale: loading ? 1 : 0.985 }}
-          className="w-full mt-1 py-2 sm:py-2.5 px-4 rounded-xl bg-stone-900 hover:bg-black active:bg-stone-950 text-white font-semibold text-xs sm:text-sm shadow-[0_2px_4px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+          className="w-full mt-2 py-2.5 px-4 rounded-xl bg-stone-950 hover:bg-black active:bg-stone-900 text-white font-semibold text-xs sm:text-sm shadow-[0_4px_14px_-2px_rgba(28,25,23,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] transition-all disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2 group"
         >
           {loading ? (
             <>
@@ -279,18 +253,21 @@ export const RegisterPage: React.FC = () => {
               <span>Memproses Pendaftaran...</span>
             </>
           ) : (
-            <span>Daftarkan Akun Studio Baru</span>
+            <>
+              <span>Daftarkan Akun Studio Baru</span>
+              <ArrowRight className="w-4 h-4 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+            </>
           )}
         </motion.button>
       </form>
 
       {/* 4. Footer & Back to Login */}
-      <div className="pt-1.5 border-t border-stone-100 text-center">
+      <div className="pt-2 border-t border-stone-100 text-center">
         <p className="text-xs text-stone-500">
           Sudah memiliki akun studio?{' '}
           <Link
             to="/auth/login"
-            className="font-semibold text-stone-900 hover:text-black underline underline-offset-2 transition-colors"
+            className="font-semibold text-stone-950 hover:text-black underline underline-offset-4 decoration-amber-400 hover:decoration-amber-500 transition-colors"
           >
             Masuk ke Konsol
           </Link>

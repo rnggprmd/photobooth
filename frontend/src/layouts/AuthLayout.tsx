@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Camera,
   QrCode,
+  Printer,
 } from 'lucide-react';
 
 import { Interactive3DBackground } from '../components/auth/Interactive3DBackground';
@@ -23,16 +24,64 @@ export const AuthLayout: React.FC = () => {
   const [flashCount, setFlashCount] = useState(142);
   const [flashToast, setFlashToast] = useState<string | null>(null);
 
+  // Realistic synthesized camera shutter click sound
+  const playShutterSound = () => {
+    try {
+      const Ctx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = new Ctx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(860, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.09, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    } catch {
+      // Audio optional feedback
+    }
+  };
+
   const triggerCameraFlash = () => {
+    playShutterSound();
     setFlashActive(true);
     setFlashCount((prev) => prev + 1);
-    setFlashToast('Flash Canon EOS Speedlite terpicu (1/160s f/4.0 ISO 200)');
+    setFlashToast('Flash Canon EOS terpicu (1/160s f/4.0 ISO 200)');
     setTimeout(() => setFlashActive(false), 160);
-    setTimeout(() => setFlashToast(null), 3000);
+    setTimeout(() => setFlashToast(null), 2400);
   };
 
   return (
-    <div className="h-screen max-h-screen overflow-hidden bg-white text-slate-900 flex flex-col justify-between font-sans selection:bg-indigo-600 selection:text-white relative">
+    <div className="h-screen max-h-screen overflow-hidden bg-[#fafaf9] text-stone-900 flex flex-col justify-between font-sans selection:bg-amber-400 selection:text-stone-950 relative">
+      {/* 1. Warm Studio Keylight Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none z-0"
+        style={{
+          background: 'radial-gradient(ellipse 70% 50% at 50% 20%, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.03) 45%, transparent 75%)',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* 2. Precision Darkroom Calibration Grid */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.38] z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(214, 211, 209, 0.5) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(214, 211, 209, 0.5) 1px, transparent 1px)
+          `,
+          backgroundSize: '48px 48px',
+          maskImage: 'radial-gradient(ellipse 80% 60% at 50% 35%, black 30%, transparent 85%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 50% 35%, black 30%, transparent 85%)',
+        }}
+        aria-hidden="true"
+      />
+
       {/* Camera Flash Screen Simulation */}
       <AnimatePresence>
         {flashActive && (
@@ -54,8 +103,9 @@ export const AuthLayout: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md flex items-center gap-2 border border-slate-700/60"
+            className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-stone-950/90 text-white text-xs px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md flex items-center gap-2 border border-stone-800"
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             <span>{flashToast}</span>
           </motion.div>
         )}
@@ -64,75 +114,95 @@ export const AuthLayout: React.FC = () => {
       {/* Interactive 3D Photobooth World (Three.js Floating Prints & Parallax) */}
       <Interactive3DBackground flashActive={flashActive} />
 
-      {/* Top Header - Clean Brand & Single-Bar */}
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 py-2.5 flex items-center justify-between border-b border-stone-200/90 bg-white/90 backdrop-blur-md shrink-0">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-7 h-7 rounded-lg bg-stone-900 flex items-center justify-center text-white shadow-xs group-hover:bg-black transition-colors">
-            <Camera className="w-3.5 h-3.5" />
+      {/* Top Header - Clean, High-End Typography */}
+      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between border-b border-stone-200/80 bg-[#fafaf9]/85 backdrop-blur-md shrink-0">
+        <Link to="/" className="flex items-center gap-2.5 group cursor-pointer select-none">
+          <div className="w-8 h-8 rounded-lg bg-stone-950 flex items-center justify-center text-white shadow-xs group-hover:bg-black transition-colors">
+            <Camera className="w-4 h-4 group-hover:text-amber-400 transition-colors" />
           </div>
-          <span className="font-bold text-base tracking-tight text-slate-900">SnapStudio</span>
+          <span className="font-heading-xl text-base font-bold tracking-tight text-stone-950">
+            Snap<span className="text-amber-600">Studio</span>
+          </span>
         </Link>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-stone-50 border border-stone-200 text-xs text-slate-600 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-medium text-slate-800">Wedding Live:</span>
-            <span className="text-slate-600 font-serif italic">Kevin &amp; Astrid</span>
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-2 text-xs text-stone-600">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Kiosk Aktif:</span>
+            <span className="text-stone-900 font-serif italic">Kevin &amp; Astrid</span>
             <span className="text-stone-300">•</span>
-            <span className="text-[11px] font-mono font-semibold text-stone-700">{flashCount} Sesi Cetak</span>
+            <span className="text-stone-700 font-medium">{flashCount} Sesi Cetak</span>
           </div>
 
           <Link
             to="/"
-            className="px-2.5 py-1 rounded-lg border border-stone-200 hover:bg-stone-100/80 text-slate-700 text-xs font-medium transition-colors bg-white shadow-2xs"
+            className="px-3 py-1 rounded-lg border border-stone-200 hover:border-stone-400 hover:bg-stone-100 text-stone-700 hover:text-stone-950 text-xs font-medium transition-colors bg-white shadow-2xs flex items-center gap-1.5"
           >
-            Landing Page
+            <span>←</span>
+            <span>Beranda</span>
           </Link>
         </div>
       </header>
 
-      {/* Main Container - Responsive contained */}
+      {/* Main Container - Contained & Ergonomic */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-3 py-2 sm:px-6 lg:px-8 min-h-0 overflow-y-auto lg:overflow-hidden">
         <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-10 items-center my-auto">
           
           {/* Left Column: Interactive Wedding & Photobooth Experience Showcase (Desktop) */}
-          <div className="hidden lg:flex lg:col-span-7 flex-col justify-center space-y-3 pr-4">
-            <div className="space-y-1.5">
-              <h1 className="text-2xl xl:text-3xl font-extrabold tracking-tight text-slate-900 leading-snug">
-                Abadikan Setiap Senyum &amp; Momen Bahagia di Hari Istimewa.
+          <div className="hidden lg:flex lg:col-span-7 flex-col justify-center space-y-3.5 pr-4">
+            
+            <div className="space-y-2">
+              <h1 className="text-2xl xl:text-3xl font-extrabold tracking-tight text-stone-950 leading-snug">
+                Kendali Stan Foto, Kiosk On-Site &amp;{' '}
+                <span className="relative inline-block text-stone-950">
+                  Cetak Seketika.
+                  <svg className="absolute -bottom-1 left-0 w-full h-2 text-amber-400 pointer-events-none" viewBox="0 0 100 12" preserveAspectRatio="none" fill="none">
+                    <path d="M0,7 Q25,0 50,7 T100,7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </span>
               </h1>
-              <p className="text-slate-600 text-xs leading-relaxed max-w-md">
-                Solusi cetak strip foto kilat, live kiosk kamera Canon EOS, kustomisasi bingkai pernikahan, dan distribusi galeri instan via QR code para tamu.
+              <p className="text-stone-600 text-xs sm:text-[13px] leading-relaxed max-w-md">
+                Solusi operasional stan foto profesional: tethering kamera Canon EOS / Sony, spooler cetak auto-cut printer DNP, dan galeri cloud instan tamu undangan.
               </p>
             </div>
 
-            {/* Interactive Filter Preset Selector Bar - Clean Typography */}
-            <div className="flex items-center justify-between px-1 pt-1">
-              <span className="text-[11px] font-semibold text-slate-700">
-                Preset Filter Kiosk:
+            {/* Interactive Filter Preset Selector Bar */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-xs font-semibold text-stone-700">
+                Filter Cetak Kiosk:
               </span>
-              <div className="inline-flex p-0.5 rounded-lg bg-stone-200/70 border border-stone-300/70 text-[10px]">
+              <div className="inline-flex p-1 rounded-xl bg-stone-200/70 border border-stone-300/60 gap-1 text-[11px]">
                 {(['normal', 'bw', 'sepia', 'vintage'] as FilterMode[]).map((mode) => (
                   <button
                     key={mode}
                     type="button"
-                    onClick={() => setFilterMode(mode)}
-                    className={`px-2 py-0.5 rounded-md font-medium transition-all cursor-pointer ${
+                    onClick={() => {
+                      setFilterMode(mode);
+                      playShutterSound();
+                    }}
+                    className={`relative px-3 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
                       filterMode === mode
-                        ? 'bg-white text-slate-900 shadow-2xs font-semibold'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'text-white font-semibold'
+                        : 'text-stone-600 hover:text-stone-950'
                     }`}
                   >
-                    {FILTER_STYLES[mode].label}
+                    {filterMode === mode && (
+                      <motion.div
+                        layoutId="activeFilterPill"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                        className="absolute inset-0 bg-stone-950 rounded-lg shadow-xs -z-10"
+                      />
+                    )}
+                    <span>{FILTER_STYLES[mode].label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Visual Photobooth Prints Composition (3 Layered Draggable Prints with Spring Physics) */}
+            {/* Visual Photobooth Prints Composition (3 Layered Draggable Physical Prints) */}
             <div className="relative py-2 px-1">
-              {/* Backglow layer */}
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-100/40 via-rose-100/30 to-indigo-100/30 rounded-2xl -z-10 blur-xl" />
+              {/* Soft warm backglow layer */}
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-200/30 via-orange-100/20 to-stone-200/25 rounded-2xl -z-10 blur-xl" />
 
               <div className="flex items-center justify-center relative -space-x-4 sm:-space-x-5">
                 
@@ -144,13 +214,13 @@ export const AuthLayout: React.FC = () => {
                   whileDrag={{ scale: 1.04, zIndex: 30 }}
                   initial={{ opacity: 0, y: 15, rotate: -6 }}
                   animate={{ opacity: 1, y: 0, rotate: -5 }}
-                  whileHover={{ rotate: 0, y: -4, scale: 1.03, zIndex: 35 }}
+                  whileHover={{ rotate: 0, y: -5, scale: 1.03, zIndex: 35 }}
                   transition={{ duration: 0.35, ease: 'easeOut' }}
                   className="w-32 bg-white p-2 rounded-lg shadow-md border border-stone-200/90 relative cursor-grab active:cursor-grabbing group select-none shrink-0"
                   title="Geser strip foto untuk merasakan fisika kertas"
                 >
-                  {/* Tape strip on top */}
-                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-9 h-3.5 bg-amber-100/80 border-t border-b border-amber-200/60 shadow-2xs rotate-1 z-20 pointer-events-none" />
+                  {/* Real washi tape strip on top */}
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-9 h-3.5 bg-amber-100/90 border-t border-b border-amber-300/60 shadow-2xs rotate-1 z-20 pointer-events-none" />
 
                   {/* Strip Image with Interactive Live Preset Filter */}
                   <div className="rounded overflow-hidden bg-stone-100 border border-stone-200">
@@ -162,23 +232,18 @@ export const AuthLayout: React.FC = () => {
                     />
                   </div>
 
-                  {/* Printed caption at bottom of strip */}
-                  <div className="pt-1 text-center">
-                    <p className="font-serif italic text-[10px] font-bold text-slate-800 leading-tight">
+                  {/* Printed souvenir caption at bottom of strip */}
+                  <div className="pt-1.5 text-center">
+                    <p className="font-serif italic text-[10px] font-bold text-stone-900 leading-tight">
                       Kevin &amp; Astrid
                     </p>
-                    <p className="text-[8px] text-slate-400 font-mono tracking-wider uppercase">
+                    <p className="text-[8px] text-stone-400 font-mono tracking-wider uppercase mt-0.5">
                       02.10.2026
                     </p>
                   </div>
-
-                  {/* Badge floating - Clean Text */}
-                  <div className="absolute -bottom-2 -left-1.5 bg-slate-900 text-white text-[8px] font-semibold px-2 py-0.5 rounded-full shadow-xs">
-                    Strip 2x6
-                  </div>
                 </motion.div>
 
-                {/* 2. Center Postcard 4R Glossy Print (New 3rd Print) */}
+                {/* 2. Center Postcard 4R Glossy Print */}
                 <motion.div
                   drag
                   dragConstraints={{ left: -15, right: 15, top: -10, bottom: 10 }}
@@ -186,7 +251,7 @@ export const AuthLayout: React.FC = () => {
                   whileDrag={{ scale: 1.04, zIndex: 30 }}
                   initial={{ opacity: 0, y: 20, rotate: 0 }}
                   animate={{ opacity: 1, y: 0, rotate: 1 }}
-                  whileHover={{ rotate: 0, y: -4, scale: 1.03, zIndex: 35 }}
+                  whileHover={{ rotate: 0, y: -5, scale: 1.03, zIndex: 35 }}
                   transition={{ duration: 0.38, delay: 0.05, ease: 'easeOut' }}
                   className="w-36 bg-white p-2 pb-2.5 rounded-lg shadow-lg border border-stone-200/90 relative cursor-grab active:cursor-grabbing group z-10 select-none shrink-0 mt-1"
                   title="Geser cetak foto 4R untuk merasakan fisika kertas"
@@ -203,15 +268,15 @@ export const AuthLayout: React.FC = () => {
                   {/* Printed caption */}
                   <div className="pt-1.5 px-0.5 flex items-center justify-between">
                     <div>
-                      <p className="font-serif italic text-[10px] font-bold text-slate-900 leading-tight">
+                      <p className="font-serif italic text-[10px] font-bold text-stone-900 leading-tight">
                         Celebration Toast
                       </p>
-                      <p className="text-[8px] text-slate-400 font-mono">
+                      <p className="text-[8px] text-stone-400 font-mono">
                         Ballroom Hall
                       </p>
                     </div>
-                    <span className="text-[8px] font-semibold text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-200">
-                      Cetak 4R
+                    <span className="text-[9px] text-stone-500 font-medium font-serif italic">
+                      Dye-Sub 300DPI
                     </span>
                   </div>
                 </motion.div>
@@ -224,9 +289,9 @@ export const AuthLayout: React.FC = () => {
                   whileDrag={{ scale: 1.04, zIndex: 30 }}
                   initial={{ opacity: 0, y: 20, rotate: 6 }}
                   animate={{ opacity: 1, y: 0, rotate: 5 }}
-                  whileHover={{ rotate: 1, y: -4, scale: 1.03, zIndex: 35 }}
+                  whileHover={{ rotate: 1, y: -5, scale: 1.03, zIndex: 35 }}
                   transition={{ duration: 0.4, delay: 0.1, ease: 'easeOut' }}
-                  className="w-36 bg-white p-2 pb-2.5 rounded-lg shadow-lg border border-stone-200/90 relative cursor-grab active:cursor-grabbing group z-20 select-none shrink-0 mt-4"
+                  className="w-36 bg-white p-2 pb-3 rounded-lg shadow-lg border border-stone-200/90 relative cursor-grab active:cursor-grabbing group z-20 select-none shrink-0 mt-4"
                   title="Geser Polaroid untuk merasakan fisika kertas"
                 >
                   <div className="aspect-square rounded overflow-hidden bg-stone-100 border border-stone-200">
@@ -238,67 +303,67 @@ export const AuthLayout: React.FC = () => {
                     />
                   </div>
 
-                  {/* Polaroid handwritten style label - Clean */}
+                  {/* Polaroid handwritten label */}
                   <div className="pt-1.5 px-0.5 flex items-center justify-between">
                     <div>
-                      <p className="font-serif italic text-[10px] font-bold text-slate-900 leading-tight">
+                      <p className="font-serif italic text-[10px] font-bold text-stone-900 leading-tight">
                         Joyful Guests
                       </p>
-                      <p className="text-[8px] text-rose-600 font-medium">
-                        Wedding Reception
+                      <p className="text-[8px] text-stone-500 font-mono">
+                        Wedding Hall
                       </p>
                     </div>
-                    <div className="w-5 h-5 rounded-md bg-stone-100 flex items-center justify-center text-slate-700">
-                      <QrCode className="w-3 h-3" />
+                    <div className="w-5 h-5 rounded-md bg-stone-100 flex items-center justify-center text-stone-700">
+                      <QrCode className="w-3.5 h-3.5" />
                     </div>
-                  </div>
-
-                  {/* Badge floating - Clean Text */}
-                  <div className="absolute -top-2 -right-1 bg-emerald-600 text-white text-[8px] font-semibold px-2 py-0.5 rounded-full shadow-xs">
-                    Scan QR Tamu
                   </div>
                 </motion.div>
 
               </div>
             </div>
 
-            {/* Feature Highlights & Interactive Camera Shutter Test - 3 Cards */}
-            <div className="grid grid-cols-3 gap-2 text-xs pt-0.5">
-              <div className="p-2 sm:p-2.5 rounded-xl border border-stone-200 bg-white/90 shadow-2xs">
-                <div className="font-semibold text-slate-800 mb-0.5 text-[11px]">
-                  Cetak Kilat 12s
-                </div>
-                <p className="text-slate-500 text-[9.5px] leading-relaxed">
-                  Spooler printer DNP DS620 dengan auto-cutter strip rapi.
-                </p>
-              </div>
-
+            {/* Interactive Tactile Studio Control Modules (No AI badges) */}
+            <div className="grid grid-cols-2 gap-2.5 pt-1 text-xs">
+              {/* 1. Camera Shutter & Flash Trigger */}
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.015 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={triggerCameraFlash}
-                className="p-2 sm:p-2.5 rounded-xl border border-stone-200 bg-white hover:border-stone-400 hover:bg-stone-50/50 transition-all text-left shadow-2xs cursor-pointer group"
-                title="Klik untuk mensimulasikan flash kamera Canon EOS"
+                className="p-3 rounded-xl border border-stone-200/90 bg-white/95 hover:border-amber-500 hover:shadow-xs transition-all text-left cursor-pointer group flex items-center justify-between"
+                title="Klik untuk memicu suara shutter dan flash kamera Canon EOS"
               >
-                <div className="font-semibold text-slate-800 flex items-center justify-between mb-0.5 text-[11px]">
-                  <span className="text-stone-900 font-medium">Uji Flash</span>
-                  <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-stone-100 text-stone-700 border border-stone-300 font-semibold">
-                    Tes
-                  </span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-stone-950 text-white flex items-center justify-center group-hover:bg-amber-500 group-hover:text-stone-950 transition-colors">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-stone-900 leading-tight text-xs">
+                      Uji Shutter &amp; Flash
+                    </div>
+                    <div className="text-[10px] text-stone-500 mt-0.5">
+                      Canon EOS ({flashCount}x terpicu)
+                    </div>
+                  </div>
                 </div>
-                <p className="text-slate-500 text-[9.5px] leading-relaxed">
-                  Flash speedlite Canon EOS ({flashCount}x).
-                </p>
+                <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-1 rounded-lg border border-amber-200/60 group-hover:bg-amber-100 transition-colors">
+                  Jepret 📸
+                </span>
               </motion.button>
 
-              <div className="p-2 sm:p-2.5 rounded-xl border border-stone-200 bg-white/90 shadow-2xs">
-                <div className="font-semibold text-slate-800 mb-0.5 text-[11px]">
-                  Galeri QR Kilat
+              {/* 2. DNP DS620 High-Speed Spooler */}
+              <div className="p-3 rounded-xl border border-stone-200/90 bg-white/90 text-xs flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-stone-100 text-stone-800 flex items-center justify-center shrink-0">
+                  <Printer className="w-4 h-4" />
                 </div>
-                <p className="text-slate-500 text-[9.5px] leading-relaxed">
-                  Distribusi foto &amp; GIF instan ke smartphone para tamu.
-                </p>
+                <div>
+                  <div className="font-bold text-stone-900 leading-tight text-xs">
+                    Spooler DNP DS620
+                  </div>
+                  <div className="text-[10px] text-stone-500 mt-0.5">
+                    Auto-cutter 12 detik per 2 strip
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -306,11 +371,13 @@ export const AuthLayout: React.FC = () => {
           {/* Right Column: Authentication Card Container */}
           <div className="w-full lg:col-span-5 flex justify-center lg:justify-end">
             <motion.div 
-              initial={{ opacity: 0, y: 28, scale: 0.95 }}
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 24, mass: 0.85, delay: 0.08 }}
-              className="w-full max-w-[360px] sm:max-w-[390px] bg-white border border-stone-200/90 rounded-2xl shadow-[0_12px_36px_-10px_rgba(0,0,0,0.08),0_2px_6px_rgba(0,0,0,0.02)] ring-1 ring-stone-900/[0.03] relative overflow-hidden my-auto"
+              transition={{ type: 'spring', stiffness: 280, damping: 26, mass: 0.85, delay: 0.05 }}
+              className="w-full max-w-[370px] sm:max-w-[400px] bg-white/95 backdrop-blur-md border border-stone-200/90 rounded-2xl shadow-[0_16px_44px_-12px_rgba(28,25,23,0.12),0_2px_6px_rgba(28,25,23,0.04)] ring-1 ring-stone-900/[0.04] relative overflow-hidden my-auto"
             >
+              {/* Top decorative film accent bar */}
+              <div className="h-1 w-full bg-gradient-to-r from-stone-950 via-amber-400 to-stone-950" />
               <Outlet />
             </motion.div>
           </div>
@@ -318,15 +385,15 @@ export const AuthLayout: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer - Clean Single-Bar */}
-      <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 py-2 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 border-t border-stone-200/90 bg-white/95 shrink-0">
+      {/* Footer - Clean Editorial Bar */}
+      <footer className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-500 gap-2 border-t border-stone-200/80 bg-[#fafaf9]/90 shrink-0">
         <p className="text-[11px]">© 2026 SnapStudio Photobooth Ops. Spesialis Solusi Stan Foto Pernikahan &amp; Event.</p>
         <div className="flex items-center gap-3 text-[11px]">
-          <Link to="/admin" className="hover:text-stone-900 transition-colors">
+          <Link to="/admin" className="hover:text-stone-950 hover:underline underline-offset-4 decoration-amber-400 transition-colors">
             Konsol Studio
           </Link>
           <span className="text-stone-300">•</span>
-          <Link to="/booth/onsite" className="hover:text-stone-900 transition-colors">
+          <Link to="/booth/onsite" className="hover:text-stone-950 hover:underline underline-offset-4 decoration-amber-400 transition-colors">
             Kiosk On-Site
           </Link>
         </div>

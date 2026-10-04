@@ -1,13 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Calendar,
+  Layers,
+  Palette,
+  Users,
+  Tv,
+  Image as ImageIcon,
+  Printer,
+  Receipt,
+  Settings,
+  CreditCard,
+  Search,
+  Bell,
+  CheckCircle2,
+  AlertTriangle,
+  Menu,
+  X,
+  ChevronsUpDown,
+  LogOut,
+  ExternalLink,
+  Store,
+  Shield,
+  MonitorPlay,
+  SlidersHorizontal,
+} from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { notificationsApi, type NotificationItem } from '../api/notifications';
+
+interface NavItem {
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+}
+
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
 
 export const AppLayout: React.FC = () => {
   const { user, tenant, clearAuth } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
@@ -97,38 +136,38 @@ export const AppLayout: React.FC = () => {
     user?.roles?.some((r: any) => (typeof r === 'string' ? r === 'super_admin' : r.name === 'super_admin'))
   );
 
-  const navGroups = isSuperAdmin
+  const navGroups: NavGroup[] = isSuperAdmin
     ? [
         {
-          title: 'Utama',
+          title: 'Ikhtisar',
           items: [
-            { label: 'Platform Dashboard', path: '/admin', icon: 'space_dashboard' },
-            { label: 'Ringkasan Telemetri Global', path: '/admin/reports', icon: 'insights' },
+            { label: 'Platform Dashboard', path: '/admin', icon: LayoutDashboard },
+            { label: 'Laporan & Telemetri', path: '/admin/reports', icon: SlidersHorizontal },
           ],
         },
         {
-          title: 'Manajemen Tenant & Paket',
+          title: 'Manajemen SaaS',
           items: [
-            { label: 'Kelola Armada Tenant', path: '/admin/superadmin/tenants', icon: 'apartment' },
-            { label: 'Master Paket Langganan', path: '/admin/superadmin/plans', icon: 'admin_panel_settings' },
-            { label: 'Event Seluruh Studio', path: '/admin/events', icon: 'calendar_month' },
-            { label: 'Template & Frame Global', path: '/admin/templates', icon: 'crop_portrait' },
-            { label: 'Database Kru & Tamu', path: '/admin/customers', icon: 'badge' },
+            { label: 'Kelola Tenant Studio', path: '/admin/superadmin/tenants', icon: Store },
+            { label: 'Paket Langganan', path: '/admin/superadmin/plans', icon: Shield },
+            { label: 'Semua Event', path: '/admin/events', icon: Calendar },
+            { label: 'Frame & Template', path: '/admin/templates', icon: Palette },
+            { label: 'Database Kru & Klien', path: '/admin/customers', icon: Users },
           ],
         },
         {
-          title: 'Sesi & Galeri Global',
+          title: 'Sesi & Armada',
           items: [
-            { label: 'Monitoring Sesi Global', path: '/admin/sessions', icon: 'live_tv' },
-            { label: 'Galeri Foto Semua Tenant', path: '/admin/gallery', icon: 'qr_code_scanner' },
-            { label: 'Hardware Fleet Kiosk', path: '/admin/settings?tab=hardware', icon: 'print' },
+            { label: 'Monitoring Sesi', path: '/admin/sessions', icon: Tv },
+            { label: 'Galeri Foto Global', path: '/admin/gallery', icon: ImageIcon },
+            { label: 'Hardware Kiosk', path: '/admin/settings?tab=hardware', icon: Printer },
           ],
         },
         {
-          title: 'Finansial & Konfigurasi',
+          title: 'Finansial & Pengaturan',
           items: [
-            { label: 'Transaksi & Billing SaaS', path: '/admin/transactions', icon: 'receipt_long' },
-            { label: 'Pengaturan Platform', path: '/admin/settings?tab=tenant', icon: 'settings' },
+            { label: 'Transaksi & Billing', path: '/admin/transactions', icon: Receipt },
+            { label: 'Pengaturan Platform', path: '/admin/settings?tab=tenant', icon: Settings },
           ],
         },
       ]
@@ -136,85 +175,120 @@ export const AppLayout: React.FC = () => {
         {
           title: 'Utama',
           items: [
-            { label: 'Dashboard', path: '/admin', icon: 'space_dashboard' },
-            { label: 'Ringkasan Operasional', path: '/admin/reports', icon: 'insights' },
+            { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+            { label: 'Laporan Operasional', path: '/admin/reports', icon: SlidersHorizontal },
           ],
         },
         {
           title: 'Manajemen Bisnis',
           items: [
-            { label: 'Event & Jadwal', path: '/admin/events', icon: 'calendar_month' },
-            { label: 'Paket Layanan', path: '/admin/packages', icon: 'loyalty' },
-            { label: 'Template & Frame Studio', path: '/admin/templates', icon: 'crop_portrait' },
-            { label: 'Kelola Operator & Tamu', path: '/admin/customers', icon: 'badge' },
+            { label: 'Event & Jadwal', path: '/admin/events', icon: Calendar },
+            { label: 'Paket Layanan', path: '/admin/packages', icon: Layers },
+            { label: 'Template & Frame', path: '/admin/templates', icon: Palette },
+            { label: 'Operator & Tamu', path: '/admin/customers', icon: Users },
           ],
         },
         {
           title: 'Sesi & Galeri',
           items: [
-            { label: 'Sesi Photobooth Aktif', path: '/admin/sessions', icon: 'live_tv' },
-            { label: 'Galeri Foto & QR', path: '/admin/gallery', icon: 'qr_code_scanner' },
-            { label: 'Cetak & Hardware', path: '/admin/settings?tab=hardware', icon: 'print' },
+            { label: 'Sesi Booth Aktif', path: '/admin/sessions', icon: Tv },
+            { label: 'Galeri Foto & QR', path: '/admin/gallery', icon: ImageIcon },
+            { label: 'Cetak & Hardware', path: '/admin/settings?tab=hardware', icon: Printer },
           ],
         },
         {
           title: 'Finansial & Akun',
           items: [
-            { label: 'Transaksi & Invoice', path: '/admin/transactions', icon: 'receipt_long' },
-            { label: 'Paket Langganan Studio', path: '/admin/subscription', icon: 'stars' },
-            { label: 'Pengaturan Tenant', path: '/admin/settings?tab=tenant', icon: 'settings' },
+            { label: 'Transaksi & Invoice', path: '/admin/transactions', icon: Receipt },
+            { label: 'Paket Studio', path: '/admin/subscription', icon: CreditCard },
+            { label: 'Pengaturan Tenant', path: '/admin/settings?tab=tenant', icon: Settings },
           ],
         },
       ];
 
+  // Helper for Breadcrumb title
+  const currentPath = location.pathname;
+  let pageTitle = 'Dashboard';
+  if (currentPath.includes('/events')) pageTitle = 'Event & Jadwal';
+  else if (currentPath.includes('/templates')) pageTitle = 'Template & Frame';
+  else if (currentPath.includes('/packages')) pageTitle = 'Paket Layanan';
+  else if (currentPath.includes('/sessions')) pageTitle = 'Sesi Photobooth';
+  else if (currentPath.includes('/gallery')) pageTitle = 'Galeri Foto & QR';
+  else if (currentPath.includes('/customers')) pageTitle = 'Operator & Tamu';
+  else if (currentPath.includes('/transactions')) pageTitle = 'Transaksi & Invoice';
+  else if (currentPath.includes('/reports')) pageTitle = 'Laporan Operasional';
+  else if (currentPath.includes('/settings')) pageTitle = 'Pengaturan';
+  else if (currentPath.includes('/superadmin/tenants')) pageTitle = 'Kelola Tenant Studio';
+  else if (currentPath.includes('/superadmin/plans')) pageTitle = 'Master Paket Langganan';
+
   return (
-    <div className="bg-slate-50 text-slate-900 min-h-screen">
-      {/* Fixed Left Navigation Rail */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-white z-50 flex flex-col border-r border-slate-200 shadow-[1px_0_4px_rgba(0,0,0,0.02)]">
+    <div className="min-h-screen bg-slate-50/60 text-slate-900 flex font-sans selection:bg-indigo-600 selection:text-white">
+      {/* Mobile Drawer Overlay */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs lg:hidden"
+        />
+      )}
+
+      {/* Sidebar Shell (Shadcn Dashboard style) */}
+      <aside
+        className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-white border-r border-slate-200/80 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {/* Brand Header */}
-        <div className="h-16 px-4 flex items-center border-b border-slate-200/80">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs">
-              <span className="material-symbols-outlined text-[18px]">photo_camera</span>
+        <div className="h-14 px-4 flex items-center justify-between border-b border-slate-200/80">
+          <Link to="/admin" className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-2xs">
+              <span className="material-symbols-outlined text-[17px]">photo_camera</span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm tracking-tight text-slate-900 font-bold leading-none">SnapStudio</span>
-              <span className="text-[11px] text-slate-400 font-mono tracking-tight mt-0.5">Enterprise Booth v2.4</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm tracking-tight text-slate-900">SnapStudio</span>
+              <span className="text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                PRO
+              </span>
             </div>
-          </div>
+          </Link>
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 lg:hidden"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Tenant Selector Box */}
-        <div className="px-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
-          <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-colors cursor-pointer">
+        {/* Tenant Workspace Selector Pill */}
+        <div className="p-3 border-b border-slate-100">
+          <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80 hover:bg-slate-100/70 transition-colors cursor-pointer group">
             <div className="flex items-center gap-2 overflow-hidden">
               <div
-                className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                  isSuperAdmin ? 'bg-purple-50 border border-purple-200 text-purple-700' : 'bg-indigo-50 border border-indigo-100 text-indigo-600'
+                className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-bold ${
+                  isSuperAdmin
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-indigo-100 text-indigo-700'
                 }`}
               >
-                <span className="material-symbols-outlined text-[14px]">
-                  {isSuperAdmin ? 'admin_panel_settings' : 'storefront'}
-                </span>
+                {isSuperAdmin ? 'SA' : tenant?.name?.charAt(0) || 'L'}
               </div>
               <div className="truncate">
-                <p className="text-xs truncate text-slate-900 font-semibold leading-tight">
-                  {isSuperAdmin ? 'Super Admin Console' : tenant?.name || 'Lumina Studio & Co.'}
+                <p className="text-xs truncate font-semibold text-slate-900 leading-tight">
+                  {isSuperAdmin ? 'Super Admin Console' : tenant?.name || 'Lumina Photostudio'}
                 </p>
-                <p className="text-[10px] text-slate-400 truncate leading-tight mt-0.5">
-                  {isSuperAdmin ? 'Platform Root Access' : 'Jakarta Main Operations'}
+                <p className="text-[10px] truncate text-slate-500 font-mono leading-tight mt-0.5">
+                  {isSuperAdmin ? 'Platform Root' : 'Jakarta Main Operations'}
                 </p>
               </div>
             </div>
-            <span className="material-symbols-outlined text-slate-400 text-[16px]">unfold_more</span>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 flex-shrink-0" />
           </div>
         </div>
 
-        {/* Navigation Groups */}
+        {/* Navigation Menus */}
         <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
           {navGroups.map((group) => (
             <div key={group.title} className="space-y-1">
-              <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <p className="px-2.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 {group.title}
               </p>
               {group.items.map((item) => {
@@ -228,18 +302,32 @@ export const AppLayout: React.FC = () => {
                     (location.search.includes(itemQuery) || (!location.search && itemQuery === 'hardware'))
                   : location.pathname.startsWith(isSamePath);
 
+                const IconComponent = item.icon;
+
                 return (
                   <Link
-                    key={item.label + item.path}
+                    key={item.path}
                     to={item.path}
-                    className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-lg transition-all ${
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                       isActive
-                        ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        ? 'bg-slate-100 text-slate-900 font-semibold shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <span className={`material-symbols-outlined text-[18px] ${isActive ? 'text-indigo-400' : 'text-slate-400'}`}>{item.icon}</span>
-                    <span>{item.label}</span>
+                    <div className="flex items-center gap-2.5">
+                      <IconComponent
+                        className={`w-4 h-4 ${
+                          isActive ? 'text-indigo-600' : 'text-slate-400'
+                        }`}
+                      />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-slate-200 text-slate-700">
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 );
               })}
@@ -247,81 +335,113 @@ export const AppLayout: React.FC = () => {
           ))}
         </nav>
 
-        {/* Sidebar Footer */}
-        <div className="p-3 bg-slate-50/80 border-t border-slate-200 space-y-2">
+        {/* Sidebar Footer with User Profile */}
+        <div className="p-3 border-t border-slate-200/80 bg-slate-50/50 space-y-2">
           <Link
             to="/"
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold text-xs transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors shadow-2xs"
           >
-            <span className="material-symbols-outlined text-[16px]">public</span>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
             <span>Lihat Landing Page</span>
           </Link>
-          <div className="flex items-center justify-between px-2 text-slate-400 text-xs">
-            <span className="font-mono text-[11px] text-slate-500">SnapStudio v2.4</span>
-            <Link to="/admin/settings" className="text-[11px] text-slate-500 hover:text-slate-800 transition-colors">
-              Pengaturan
-            </Link>
+
+          <div className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                {user?.name?.charAt(0) || 'U'}
+              </div>
+              <div className="truncate">
+                <p className="text-xs truncate font-semibold text-slate-900 leading-tight">
+                  {user?.name || 'Administrator'}
+                </p>
+                <p className="text-[10px] truncate text-slate-500 font-mono leading-tight mt-0.5">
+                  {user?.email || 'admin@studio.test'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Keluar"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="pl-64">
-        {/* Fixed Top Header */}
-        <header className="fixed top-0 left-64 right-0 h-16 bg-white/95 backdrop-blur-md z-40 px-6 sm:px-8 flex items-center justify-between border-b border-slate-200/80 shadow-2xs">
+      <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
+        {/* Sticky Header Bar (Shadcn style) */}
+        <header className="sticky top-0 z-40 h-14 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer border border-slate-200/70 w-80 sm:w-96 shadow-2xs">
-              <span className="material-symbols-outlined text-[16px]">search</span>
-              <span className="text-xs text-slate-500 flex-1">
-                {isSuperAdmin ? 'Cari tenant, paket SaaS, atau rute...' : 'Cari sesi, event, foto...'}
-              </span>
-              <kbd className="px-1.5 py-0.5 rounded bg-white text-slate-400 text-[10px] font-mono border border-slate-200 shadow-2xs">⌘K</kbd>
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
+              aria-label="Buka Menu"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+
+            {/* Breadcrumb Navigation */}
+            <div className="hidden sm:flex items-center gap-1.5 text-xs">
+              <span className="text-slate-400">Konsol</span>
+              <span className="text-slate-300">/</span>
+              <span className="font-semibold text-slate-900">{pageTitle}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-3">
+            {/* Command Search Shortcut (⌘K) */}
+            <div className="hidden md:flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer w-60">
+              <Search className="w-3.5 h-3.5" />
+              <span className="text-xs text-slate-500 flex-1">Cari sesi, event...</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-white text-slate-400 text-[10px] font-mono border border-slate-200 shadow-2xs">
+                ⌘K
+              </kbd>
+            </div>
+
+            {/* Mode Booth On-Site Launch Button */}
             {isSuperAdmin ? (
               <Link
                 to="/admin/superadmin/tenants"
-                className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px]">domain</span>
+                <Store className="w-3.5 h-3.5" />
                 <span>Console Tenant</span>
               </Link>
             ) : (
               <Link
                 to="/booth/onsite"
-                className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 shadow-2xs transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px]">fullscreen</span>
-                <span>Mode Booth On-Site</span>
+                <MonitorPlay className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Mode Kiosk On-Site</span>
+                <span className="sm:hidden">Kiosk</span>
               </Link>
             )}
 
-            <div className="h-5 w-[1px] bg-slate-200"></div>
+            <div className="h-4 w-[1px] bg-slate-200" />
 
-            {/* Notification Bell with Dropdown Popover */}
+            {/* Notifications Dropdown Popover */}
             <div className="relative">
               <button
-                onClick={() => {
-                  setNotificationsOpen(!notificationsOpen);
-                  setUserMenuOpen(false);
-                }}
-                className="relative w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
                 title="Pusat Notifikasi"
                 aria-label="Pusat Notifikasi"
               >
-                <span className="material-symbols-outlined text-[19px]">notifications</span>
+                <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
                 )}
               </button>
 
               {notificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-900">Pusat Notifikasi</span>
+                      <span className="text-xs font-bold text-slate-900">Notifikasi</span>
                       {unreadCount > 0 && (
                         <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 font-mono text-[10px] font-bold">
                           {unreadCount} Baru
@@ -338,142 +458,60 @@ export const AppLayout: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 text-xs">
+                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
                     {notifications.length === 0 ? (
-                      <div className="py-8 text-center text-slate-400">
-                        <span className="material-symbols-outlined text-2xl block mb-1">notifications_off</span>
-                        <span>Tidak ada notifikasi baru</span>
+                      <div className="p-6 text-center text-xs text-slate-400">
+                        Tidak ada notifikasi aktif
                       </div>
                     ) : (
-                      notifications.map((notif) => (
+                      notifications.map((n) => (
                         <div
-                          key={notif.id}
-                          className={`p-3.5 hover:bg-slate-50/80 transition-colors flex items-start justify-between gap-3 ${
-                            notif.status === 'unread' ? 'bg-indigo-50/30' : ''
+                          key={n.id}
+                          className={`p-3 text-xs transition-colors flex items-start gap-2.5 ${
+                            n.status === 'unread' ? 'bg-indigo-50/30' : 'bg-white'
                           }`}
                         >
-                          <div
-                            className="flex items-start gap-2.5 flex-1 cursor-pointer"
-                            onClick={() => handleMarkAsRead(notif.id)}
-                          >
-                            <span
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-sm ${
-                                notif.type === 'printer_warning'
-                                  ? 'bg-amber-100 text-amber-700'
-                                  : notif.type === 'payment_success'
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : notif.type === 'session_complete'
-                                  ? 'bg-indigo-100 text-indigo-700'
-                                  : 'bg-slate-100 text-slate-700'
-                              }`}
-                            >
-                              <span className="material-symbols-outlined text-[15px]">
-                                {notif.type === 'printer_warning'
-                                  ? 'print'
-                                  : notif.type === 'payment_success'
-                                  ? 'payments'
-                                  : notif.type === 'session_complete'
-                                  ? 'photo_camera'
-                                  : 'info'}
-                              </span>
-                            </span>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <h4
-                                  className={`text-xs ${
-                                    notif.status === 'unread'
-                                      ? 'font-bold text-slate-900'
-                                      : 'font-medium text-slate-700'
-                                  }`}
-                                >
-                                  {notif.title}
-                                </h4>
-                                {notif.status === 'unread' && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 flex-shrink-0 ml-1"></span>
-                                )}
-                              </div>
-                              <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                                {notif.message}
-                              </p>
-                              <span className="text-[10px] text-slate-400 font-mono mt-1 block">
-                                {notif.created_at}
-                              </span>
-                            </div>
+                          <div className="mt-0.5">
+                            {n.type === 'printer_warning' ? (
+                              <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                            ) : (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                            )}
                           </div>
-                          <button
-                            onClick={() => handleDeleteNotification(notif.id)}
-                            className="text-slate-300 hover:text-rose-500 transition-colors p-1 cursor-pointer"
-                            title="Hapus notifikasi"
-                          >
-                            <span className="material-symbols-outlined text-[14px]">close</span>
-                          </button>
+                          <div className="flex-1">
+                            <p className="font-semibold text-slate-900 leading-snug">{n.title}</p>
+                            <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">{n.message}</p>
+                            <span className="text-[10px] text-slate-400 font-mono mt-1 block">{n.created_at}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {n.status === 'unread' && (
+                              <button
+                                onClick={() => handleMarkAsRead(n.id)}
+                                className="text-[10px] text-indigo-600 hover:underline"
+                              >
+                                Baca
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteNotification(n.id)}
+                              className="text-[10px] text-slate-400 hover:text-rose-600"
+                              title="Hapus"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
                       ))
                     )}
                   </div>
-
-                  <div className="p-2.5 bg-slate-50 border-t border-slate-100 text-center">
-                    <Link
-                      to="/admin/reports"
-                      onClick={() => setNotificationsOpen(false)}
-                      className="text-[11px] font-semibold text-indigo-600 hover:underline inline-flex items-center gap-1"
-                    >
-                      <span>Lihat Log Insiden &amp; Telemetri Selengkapnya</span>
-                      <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Profile Dropdown */}
-            <div className="relative">
-              <div
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 cursor-pointer p-1 rounded-lg hover:bg-slate-100 transition-colors"
-              >
-                <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center text-white text-xs font-semibold shadow-2xs">
-                  {user?.name ? user.name.charAt(0) : 'A'}
-                </div>
-                <div className="hidden xl:flex flex-col text-left">
-                  <span className="text-xs text-slate-900 leading-none font-semibold">
-                    {user?.name || 'Admin Studio'}
-                  </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5 leading-none">
-                    {user?.roles?.[0]?.name ? user.roles[0].name.replace('_', ' ') : 'Superuser'}
-                  </span>
-                </div>
-                <span className="material-symbols-outlined text-slate-400 text-[16px]">arrow_drop_down</span>
-              </div>
-
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50">
-                  <div className="px-4 py-2 border-b border-slate-100">
-                    <p className="text-xs font-semibold text-slate-900">{user?.name || 'Admin Studio'}</p>
-                    <p className="text-[11px] text-slate-500 truncate mt-0.5">{user?.email || 'admin@photobooth.test'}</p>
-                  </div>
-                  <Link
-                    to="/admin/settings"
-                    onClick={() => setUserMenuOpen(false)}
-                    className="block px-4 py-2 text-xs text-slate-700 hover:bg-slate-50"
-                  >
-                    Pengaturan Akun &amp; Studio
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">logout</span>
-                    Keluar (Logout)
-                  </button>
                 </div>
               )}
             </div>
           </div>
         </header>
 
-        {/* Viewport Content */}
-        <main className="relative pt-24 pb-12 px-6 sm:px-8 lg:px-10 bg-slate-50 min-h-screen w-full flex-1 max-w-[1600px] mx-auto">
+        {/* Page Content Body */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

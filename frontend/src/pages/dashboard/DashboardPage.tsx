@@ -1,8 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Camera,
+  Printer,
+  Calendar,
+  TrendingUp,
+  Plus,
+  MonitorPlay,
+  QrCode,
+  CheckCircle2,
+  ExternalLink,
+  RotateCw,
+  Search,
+  Radio,
+  FileSpreadsheet,
+} from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import { dashboardApi } from '../../api/dashboard';
 import SuperAdminDashboardPage from '../superadmin/DashboardPage';
+import { Card, CardHeader, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
 
 export const DashboardPage: React.FC = () => {
   const { user, tenant } = useAuthStore();
@@ -19,17 +37,12 @@ export const DashboardPage: React.FC = () => {
   const [eventTab, setEventTab] = useState<'all' | 'onsite' | 'hybrid'>('all');
   const [searchSession, setSearchSession] = useState('');
   const [selectedEventFilter, setSelectedEventFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
-  };
-
-  const handleSendNotification = (eventName: string) => {
-    showToast(`Pesan broadcast & instruksi operator berhasil dikirim ke armada "${eventName}"!`);
   };
 
   const handleCopyQr = (slug: string) => {
@@ -61,7 +74,7 @@ export const DashboardPage: React.FC = () => {
     showToast(`Perintah cetak ulang untuk sesi ${sessionId} dikirim ke printer DNP DS620!`);
   };
 
-  // Sample real-time sessions data aligned with BRD & PRD
+  // Real-time sessions data aligned with Photobooth operations
   const [sessions, setSessions] = useState([
     {
       id: '#SES-8821-0492',
@@ -157,822 +170,588 @@ export const DashboardPage: React.FC = () => {
   });
 
   return (
-    <div className="flex flex-col w-full space-y-6">
+    <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-900 shadow-lg animate-in fade-in slide-in-from-bottom-2">
-          <span className="material-symbols-outlined text-[17px] text-emerald-600">check_circle</span>
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-900 shadow-lg animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           <span>{toastMessage}</span>
         </div>
       )}
-      {/* Operational Alert / Hardware Health Ribbon */}
+
+      {/* Hardware Telemetry Alert Banner */}
       {showTelemetryAlert && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-xs">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 flex-shrink-0">
-              <span className="material-symbols-outlined text-[18px]">sensors</span>
+              <Radio className="w-4 h-4 animate-pulse" />
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-0.5">
-              <span className="text-xs font-semibold text-slate-900">Hardware Telemetry:</span>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-x-3 gap-y-0.5 text-xs">
+              <span className="font-semibold text-slate-900">Telemetri On-Site:</span>
+              <div className="flex flex-wrap items-center gap-2 text-slate-600">
                 <span className="inline-flex items-center gap-1.5 text-emerald-700 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Kiosk Terminal 01 (Pullman Jakarta)
                 </span>
                 <span className="text-slate-300">•</span>
                 <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 font-mono text-[11px] font-medium border border-slate-200">
-                  Kertas 4R: Sisa 38 Lembar
+                  Kertas DNP 4R: Sisa 38 Lembar
                 </span>
                 <span className="text-slate-300">•</span>
-                <span className="text-slate-600 font-medium">DNP Ribbon Tinta OK (92%)</span>
+                <span className="text-slate-600 font-medium">Ribbon Tinta OK (92%)</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-center flex-shrink-0">
             <Link
-              to="/settings"
-              className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors border border-slate-200"
+              to="/admin/settings?tab=hardware"
+              className="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium transition-colors border border-slate-200"
             >
-              Detail Hardware
+              Kelola Hardware
             </Link>
             <button
               onClick={() => setShowTelemetryAlert(false)}
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-              title="Tutup Alert"
+              className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             >
-              <span className="material-symbols-outlined text-[16px]">close</span>
+              ✕
             </button>
           </div>
         </div>
       )}
 
-      {/* Header Section & Operational Status Overview */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] font-semibold tracking-wide uppercase">
-              Multi-Tenant Core
-            </span>
-            <span className="text-slate-300">•</span>
-            <span className="font-mono text-xs text-slate-500">Tenant #ID-8821</span>
-          </div>
+      {/* Page Header (Shadcn style) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Selamat Pagi, {user?.name || 'Studio Admin'}
+            Ringkasan Operasional {tenant?.name || 'Studio'}
           </h1>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5 text-xs text-slate-600">
-            <div className="flex items-center gap-1.5 font-medium text-slate-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>{tenant?.name || 'Lumina Photostudio Bali'}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-slate-400">event_available</span>
-              <span>2 Event Berlangsung Hari Ini</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-slate-400">desktop_windows</span>
-              <span>On-Site: 3 Terminal Aktif</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[15px] text-slate-400">wifi_tethering</span>
-              <span>Online: Web Link Aktif</span>
-            </div>
-          </div>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Monitoring sesi live, armada kiosk on-site, dan telemetri perangkat cetak.
+          </p>
         </div>
 
-        {/* Quick Actions Group */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
           <Link
-            to="/templates"
-            className="px-3 py-2 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-all flex items-center gap-1.5 border border-slate-200 shadow-xs"
+            to="/admin/events"
+            className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
           >
-            <span className="material-symbols-outlined text-[17px] text-slate-500">add_photo_alternate</span>
-            <span>Upload Template</span>
+            <Plus className="w-3.5 h-3.5 text-slate-500" />
+            <span>Event Baru</span>
           </Link>
           <Link
             to="/booth/onsite"
-            className="px-3 py-2 rounded-lg bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-all flex items-center gap-1.5 border border-slate-200 shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors"
           >
-            <span className="material-symbols-outlined text-[17px] text-slate-500">terminal</span>
+            <MonitorPlay className="w-3.5 h-3.5" />
             <span>Buka Kiosk</span>
-          </Link>
-          <Link
-            to="/events"
-            className="px-3.5 py-2 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition-all flex items-center gap-1.5 shadow-xs"
-          >
-            <span className="material-symbols-outlined text-[17px]">add_circle</span>
-            <span>+ Buat Event Baru</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI / Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      {/* KPI Cards Grid (Shadcn style: clean border, small uppercase label, bold metric, trend pill) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Total Sesi Bulan Ini
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">photo_camera_front</span>
-            </div>
-          </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
+            <Camera className="w-4 h-4 text-slate-400" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
               {dashboardStats?.metrics?.today_sessions ? dashboardStats.metrics.today_sessions : 1428}
             </div>
             <div className="flex items-center gap-1 mt-1 text-xs">
-              <span className="material-symbols-outlined text-[14px] text-emerald-600 font-semibold">trending_up</span>
-              <span className="font-semibold text-emerald-600">+18.4%</span>
+              <span className="font-semibold text-emerald-600 flex items-center">
+                <TrendingUp className="w-3.5 h-3.5 mr-0.5" /> +18.4%
+              </span>
               <span className="text-slate-400">vs bulan lalu</span>
             </div>
-          </div>
-          <div className="mt-3 pt-2.5 bg-slate-50 rounded-lg p-2 flex items-center justify-between border border-slate-100 text-[11px]">
-            <span className="font-medium text-slate-700">82% Kuota</span>
-            <span className="font-mono text-slate-500">2,000 Maks</span>
-          </div>
-        </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Kuota Studio: 82%</span>
+              <span className="font-mono text-slate-700 font-medium">2,000 Maks</span>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Metric 2 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Event Aktif
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">event_seat</span>
+            <Calendar className="w-4 h-4 text-slate-400" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+              14 <span className="text-xs font-normal text-slate-500 font-sans">Acara</span>
             </div>
-          </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              14 <span className="text-xs font-normal text-slate-500 font-sans">Event</span>
-            </div>
-            <div className="flex items-center gap-1.5 mt-1 text-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              <span className="font-medium text-slate-700">3 Live Hari Ini</span>
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span className="font-medium text-slate-800">3 Live Hari Ini</span>
               <span className="text-slate-300">•</span>
-              <span className="text-slate-400">11 Jadwal</span>
+              <span className="text-slate-500">11 Terjadwal</span>
             </div>
-          </div>
-          <div className="mt-3 pt-2.5 flex items-center gap-1.5 text-slate-500 text-[11px]">
-            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-            <span>Peak: Sabtu & Minggu Ini</span>
-          </div>
-        </div>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Peak: Weekend Ini</span>
+              <span className="text-indigo-600 font-medium hover:underline cursor-pointer">Lihat Kalender</span>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Metric 3 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Pendapatan Sewa
+              Printer DNP DS620
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">payments</span>
+            <Printer className="w-4 h-4 text-slate-400" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+              38 <span className="text-xs font-normal text-slate-500 font-sans">Lembar Sisa</span>
             </div>
-          </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              Rp 42.85M
-            </div>
-            <div className="flex items-center gap-1 mt-1 text-xs">
-              <span className="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold">
-                94% Lunas
+            <div className="flex items-center gap-1.5 mt-1 text-xs">
+              <span className="px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 font-semibold border border-amber-200 text-[10px]">
+                Perlu Roll Baru
               </span>
-              <span className="text-slate-400">Bulan Berjalan</span>
+              <span className="text-slate-400 font-mono">Roll #DNP-4R</span>
             </div>
-          </div>
-          <div className="mt-3 pt-2.5 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Invoice Selesai</span>
-            <span className="font-mono font-medium text-slate-800">32 / 34</span>
-          </div>
-        </div>
+            <div className="mt-3 pt-2 border-t border-slate-100">
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-amber-500 h-full rounded-full" style={{ width: '22%' }} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Metric 4 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Output Cetak & QR
             </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">burst_mode</span>
-            </div>
-          </div>
-          <div className="my-1">
-            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono tabular-nums">
-              4,896
+            <QrCode className="w-4 h-4 text-slate-400" />
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="text-2xl font-bold tracking-tight text-slate-900 font-mono">
+              4,896 <span className="text-xs font-normal text-slate-500 font-sans">Foto</span>
             </div>
             <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
-              <span>QR: <strong className="text-slate-800 font-medium">91.2%</strong></span>
-              <span>Print: <strong className="text-slate-800 font-medium">98.7%</strong></span>
+              <span>Unduh QR: <strong className="text-slate-800 font-semibold">91.2%</strong></span>
+              <span>Cetak Fisik: <strong className="text-slate-800 font-semibold">98.7%</strong></span>
             </div>
-          </div>
-          <div className="mt-3 pt-2.5 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-            <div className="bg-slate-900 h-full rounded-full" style={{ width: '94%' }}></div>
-          </div>
-        </div>
-
-        {/* Metric 5 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Storage S3 Jakarta
-            </span>
-            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 flex-shrink-0">
-              <span className="material-symbols-outlined text-[16px]">cloud_queue</span>
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Storage S3: 14.2 / 25 GB</span>
+              <span className="text-emerald-600 font-medium">Aman</span>
             </div>
-          </div>
-          <div className="my-1">
-            <div className="flex items-baseline gap-1 font-mono">
-              <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">14.2</span>
-              <span className="text-xs text-slate-500 font-sans">/ 25 GB</span>
-            </div>
-            <span className="text-xs text-slate-400">AWS Jakarta Region</span>
-          </div>
-          <div className="mt-3 pt-2.5">
-            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '56.8%' }}></div>
-            </div>
-            <div className="flex justify-between items-center mt-1 text-[11px] text-slate-500">
-              <span>56.8% Terpakai</span>
-              <span className="text-emerald-600 font-medium">Kapasitas Aman</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Live Monitoring & Popular Templates Mosaic */}
+      {/* Live Event & Telemetry Fleet */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Live Event & Kiosk Fleet (2 Cols Span) */}
+        {/* Left Column: Kiosk Fleet (2 Cols) */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <h2 className="text-base font-semibold text-slate-900 tracking-tight">
-                Live Event &amp; Kiosk Telemetry
+                Armada Kiosk On-Site & Live Event
               </h2>
             </div>
-            <div className="inline-flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200/80">
+            <div className="inline-flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
               <button
                 onClick={() => setEventTab('all')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   eventTab === 'all'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 Semua (3)
               </button>
               <button
                 onClick={() => setEventTab('onsite')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   eventTab === 'onsite'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 On-Site (2)
               </button>
               <button
                 onClick={() => setEventTab('hybrid')}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                   eventTab === 'hybrid'
-                    ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white text-slate-900 shadow-2xs font-semibold'
+                    : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
-                Hybrid (1)
+                Online (1)
               </button>
             </div>
           </div>
 
-          {/* Live Cards Container */}
-          <div className="space-y-3">
-            {/* Live Card 1: Pullman Wedding */}
-            {(eventTab === 'all' || eventTab === 'onsite') && (
-              <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 gap-2 border-b border-slate-100">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-mono text-[11px] font-semibold border border-slate-200">
-                      EV-2026-091
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      Sedang Berlangsung
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-200">
-                      Mode: On-Site
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="font-mono">Sync: 12 dtk lalu</span>
-                    <button className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                      <span className="material-symbols-outlined text-[16px]">more_vert</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                  <div className="md:col-span-2 space-y-1">
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Wedding of Kevin &amp; Astrid
-                    </h3>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
-                      Ballroom 2, Pullman Jakarta Central Park
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-slate-600">
-                      <span>Operator: <strong className="text-slate-800 font-medium">Rian &amp; Siti</strong></span>
-                      <span className="text-slate-300">•</span>
-                      <span>Hardware: <strong className="text-slate-800 font-medium">2 Kiosk (TS-A &amp; TS-B)</strong></span>
-                      <span className="text-slate-300">•</span>
-                      <span>Template: <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px]">4R Floral Gold</span></span>
-                    </div>
-                  </div>
-
-                  {/* Progress Telemetry */}
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/70 flex flex-col justify-between">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[11px] text-slate-500 font-medium">Progress Sesi</span>
-                      <span className="font-mono text-xs text-slate-900 font-semibold">184 / 200</span>
-                    </div>
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-1.5">
-                      <div className="bg-slate-900 h-full rounded-full" style={{ width: '92%' }}></div>
-                    </div>
-                    <div className="flex justify-between text-[11px] text-slate-500">
-                      <span>92% Quota Event</span>
-                      <span className="text-emerald-600 font-medium">16 Sisa</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2.5 gap-2 border-t border-slate-100 text-xs">
-                  <div className="flex items-center gap-3 text-slate-600">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-emerald-600">print</span>
-                      DNP DS620: Ready
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-indigo-600">photo_camera</span>
-                      Canon R100: Connected
-                    </span>
-                  </div>
+          {/* Kiosk Fleet Card 1 */}
+          <Card className="hover:border-slate-300 transition-colors">
+            <CardContent className="p-4 sm:p-5 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleSendNotification('Wedding of Kevin & Astrid')}
-                      className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200 transition-colors cursor-pointer"
-                    >
-                      Kirim Notifikasi
-                    </button>
-                    <Link
-                      to="/booth/onsite"
-                      className="px-2.5 py-1 rounded-md bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 transition-colors flex items-center gap-1"
-                    >
-                      <span>Live Feed Kiosk</span>
-                      <span className="material-symbols-outlined text-[13px]">open_in_new</span>
-                    </Link>
+                    <span className="font-bold text-sm text-slate-900">
+                      Wedding Kevin &amp; Astrid
+                    </span>
+                    <Badge variant="outline" className="text-[10px] text-emerald-700 bg-emerald-50 border-emerald-200 font-mono">
+                      LIVE ON-SITE
+                    </Badge>
                   </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Pullman Ballroom 2, Jakarta Barat • Kiosk Unit #01 &amp; #02
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => handleCopyQr('kevin-astrid')}
+                  >
+                    <QrCode className="w-3.5 h-3.5 mr-1 text-slate-500" />
+                    Salin QR Tamu
+                  </Button>
+                  <Link to="/booth/onsite">
+                    <Button size="sm" className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700">
+                      Buka Terminal
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            )}
 
-            {/* Live Card 2: Tech Summit Afterparty */}
-            {(eventTab === 'all' || eventTab === 'hybrid') && (
-              <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs hover:border-slate-300 transition-all space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 gap-2 border-b border-slate-100">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-mono text-[11px] font-semibold border border-slate-200">
-                      EV-2026-092
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      Live Hybrid
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-medium">
-                      Hybrid QR + Kiosk
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="font-mono">Sync: 45 dtk lalu</span>
-                    <button className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                      <span className="material-symbols-outlined text-[16px]">more_vert</span>
-                    </button>
-                  </div>
+              {/* Hardware Status Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Kamera Kiosk 01</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">Canon EOS R50</div>
+                  <div className="text-[10px] text-emerald-600 font-mono">1080p • 60 FPS</div>
                 </div>
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Printer DNP 01</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">DNP DS620</div>
+                  <div className="text-[10px] text-amber-600 font-mono">Kertas 38/400</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Sesi Selesai</div>
+                  <div className="font-semibold text-slate-800 mt-0.5 font-mono">148 Cetakan</div>
+                  <div className="text-[10px] text-slate-500">Avg 42 detik/sesi</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Template Frame</div>
+                  <div className="font-semibold text-slate-800 mt-0.5 truncate">4R Minimalist Gold</div>
+                  <div className="text-[10px] text-indigo-600 font-mono">3 Shots Strip</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                  <div className="md:col-span-2 space-y-1">
-                    <h3 className="text-sm font-semibold text-slate-900">
+          {/* Kiosk Fleet Card 2 */}
+          <Card className="hover:border-slate-300 transition-colors">
+            <CardContent className="p-4 sm:p-5 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-slate-900">
                       Tech Summit Afterparty 2026
-                    </h3>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
-                      ICE BSD Hall 3 &amp; Web Link Live
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-slate-600">
-                      <span>Operator: <strong className="text-slate-800 font-medium">Dimas Tri</strong></span>
-                      <span className="text-slate-300">•</span>
-                      <span>Hardware: <strong className="text-slate-800 font-medium">1 Kiosk Booth + Web App</strong></span>
-                      <span className="text-slate-300">•</span>
-                      <span>Template: <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[11px]">Cyber Glitch 2R</span></span>
-                    </div>
+                    </span>
+                    <Badge variant="outline" className="text-[10px] text-blue-700 bg-blue-50 border-blue-200 font-mono">
+                      HYBRID BOOTH
+                    </Badge>
                   </div>
-
-                  {/* Progress Telemetry */}
-                  <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/70 flex flex-col justify-between">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[11px] text-slate-500 font-medium">Total Sesi Terekam</span>
-                      <span className="font-mono text-xs text-slate-900 font-semibold">312 Sesi</span>
-                    </div>
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-1.5">
-                      <div className="bg-slate-900 h-full rounded-full" style={{ width: '78%' }}></div>
-                    </div>
-                    <div className="flex justify-between text-[11px] text-slate-500">
-                      <span>Unlimited Package</span>
-                      <span className="text-slate-800 font-medium">QR Dominan (64%)</span>
-                    </div>
-                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    ICE BSD Hall 3 &amp; Web Link Tamu • Kiosk Unit #03
+                  </p>
                 </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-2.5 gap-2 border-t border-slate-100 text-xs">
-                  <div className="flex items-center gap-3 text-slate-600">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-slate-400">qr_code_2</span>
-                      Web Portal: lumina.snap/ts26
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[15px] text-amber-500">flash_on</span>
-                      Auto-AI Removal: Aktif
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleCopyQr('ts26')}
-                      className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-xs font-medium hover:bg-slate-200 transition-colors cursor-pointer"
-                    >
-                      Salin QR
-                    </button>
-                    <Link
-                      to="/events"
-                      className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 text-xs font-medium hover:bg-slate-50 transition-colors shadow-xs"
-                    >
-                      Kelola Event
-                    </Link>
-                  </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => handleCopyQr('tech-summit')}
+                  >
+                    <QrCode className="w-3.5 h-3.5 mr-1 text-slate-500" />
+                    Salin QR Tamu
+                  </Button>
+                  <Link to="/booth/online/tech-summit">
+                    <Button variant="outline" size="sm" className="h-8 text-xs">
+                      Web Booth
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* Hardware Status Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Kamera Kiosk 03</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">Sony A6400</div>
+                  <div className="text-[10px] text-emerald-600 font-mono">1080p • 60 FPS</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Printer DNP 03</div>
+                  <div className="font-semibold text-slate-800 mt-0.5">DNP DS620</div>
+                  <div className="text-[10px] text-emerald-600 font-mono">Kertas 210/400</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Sesi Selesai</div>
+                  <div className="font-semibold text-slate-800 mt-0.5 font-mono">92 Sesi Web</div>
+                  <div className="text-[10px] text-slate-500">QR Sync Realtime</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                  <div className="text-[10px] text-slate-400 font-medium">Template Frame</div>
+                  <div className="font-semibold text-slate-800 mt-0.5 truncate">Cyber Glitch 2R</div>
+                  <div className="text-[10px] text-indigo-600 font-mono">2 Shots Vertical</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Right Column: Popular Templates & Visual Previews */}
+        {/* Right Column: Templates & Quick Config (1 Col) */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-slate-900 tracking-tight">
               Template Terpopuler
             </h2>
-            <Link to="/templates" className="text-xs text-indigo-600 font-medium hover:underline flex items-center gap-0.5">
-              <span>Semua Galeri</span>
-              <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+            <Link to="/admin/templates" className="text-xs text-indigo-600 hover:underline font-medium">
+              Lihat Semua
             </Link>
           </div>
 
-          <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs space-y-3">
-            {/* Item 1: Classic 4R Strip */}
-            <div className="p-2.5 rounded-lg bg-slate-50/70 hover:bg-slate-50 transition-colors border border-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="w-14 h-18 rounded-md overflow-hidden flex-shrink-0 bg-slate-200 border border-slate-200 relative group">
-                  <img
-                    className="w-full h-full object-cover"
-                    alt="Classic 4R Strip Vertical"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs2uSCA_1x4egT-SWZhe80JHNnZtQf_RWXoZP9HFCIZSnvDBE0wCW_2GExbQU9cvJ3o5K7MAHq0osFLPXxDfMlacpRHG_6T3YmiIDGOcVbJkPACrm8FDvEmTZQiJgwzFe-UElfHdSmaY8qdpQiKhN_4MkU8UkbIiB0gOLDnNz6SRO68OqdgpG7mBMBpAlM7xjQRAaNKCD-gTzAGuXzATSBV0YArRZbDBZF8zkQEWN0OV8HrdOtMZk"
-                  />
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="material-symbols-outlined text-white text-[15px]">visibility</span>
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-md bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                    4R
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">4R Minimalist Gold</p>
+                    <p className="text-[11px] text-slate-500">3 Shots • Wedding / Gala</p>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="px-1.5 py-0.5 rounded bg-white text-slate-800 font-mono text-[10px] font-semibold border border-slate-200">
-                      4R Strip
-                    </span>
-                    <span className="font-mono text-xs text-slate-900 font-semibold">640 Sesi</span>
-                  </div>
-                  <h4 className="text-xs font-semibold text-slate-900 truncate mt-1">
-                    Classic 4R Strip Vertical
-                  </h4>
-                  <p className="text-[11px] text-slate-500">3 Slots • Portrait • Auto Cut</p>
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px]">
-                      Wedding
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px]">
-                      Formal
-                    </span>
-                  </div>
-                </div>
+                <span className="font-mono text-xs font-semibold text-slate-700">62% Sesi</span>
               </div>
-            </div>
 
-            {/* Item 2: 2R Dual Bookmark */}
-            <div className="p-2.5 rounded-lg bg-slate-50/70 hover:bg-slate-50 transition-colors border border-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="w-14 h-18 rounded-md overflow-hidden flex-shrink-0 bg-slate-200 border border-slate-200 relative group">
-                  <img
-                    className="w-full h-full object-cover"
-                    alt="2R Dual Photo Bookmark"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAn6RypqRpe0zNin65jrmHHkTekkXH95Lm84ZrjQMK6gMlaTpCzgFzqBF3gFm9ydHNCPZ5x_mYQvVaz9lS-LOQEPF5ZN4iNIYPVQOCSOHoxbLgtKNh_opFW2xnKtVjw2LTbYs1GI9IkArkTMWbSons0k4o6kAnEbHYWiNEwSsBj9f1BGzT0Mm5Bh-lEwfMOuERXqqtIH_3DZmrUNIVBaiv7KbImFkkm7kXiGQPgsOf2PHqbBo01Hpk"
-                  />
-                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                    <span className="material-symbols-outlined text-white text-[15px]">visibility</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-md bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-xs">
+                    2x6
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Classic Photo Strip</p>
+                    <p className="text-[11px] text-slate-500">4 Shots • Birthday / Kiosk</p>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="px-1.5 py-0.5 rounded bg-white text-slate-800 font-mono text-[10px] font-semibold border border-slate-200">
-                      2R Bookmark
-                    </span>
-                    <span className="font-mono text-xs text-slate-900 font-semibold">480 Sesi</span>
-                  </div>
-                  <h4 className="text-xs font-semibold text-slate-900 truncate mt-1">
-                    2R Dual Photo Bookmark
-                  </h4>
-                  <p className="text-[11px] text-slate-500">2 Slots • Bookmark Format</p>
-                  <div className="mt-1.5 flex items-center gap-1.5">
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px]">
-                      Birthday
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px]">
-                      Graduation
-                    </span>
-                  </div>
-                </div>
+                <span className="font-mono text-xs font-semibold text-slate-700">24% Sesi</span>
               </div>
-            </div>
 
-            {/* Quick Auto-Layout Banner */}
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-slate-700 text-[17px]">auto_awesome</span>
-                <span className="text-xs text-slate-800 font-medium">Layout Generator Siap</span>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-md bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-xs">
+                    WEB
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Cyber Glitch Vertical</p>
+                    <p className="text-[11px] text-slate-500">2 Shots • Tech Summit</p>
+                  </div>
+                </div>
+                <span className="font-mono text-xs font-semibold text-slate-700">14% Sesi</span>
               </div>
-              <Link to="/templates" className="text-xs text-indigo-600 font-semibold hover:underline">
-                Coba Buat
-              </Link>
-            </div>
-          </div>
+
+              <div className="pt-2">
+                <Link
+                  to="/admin/templates"
+                  className="w-full py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Kustomisasi Frame Baru</span>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Real-Time Photo Sessions Log Table */}
-      <div className="flex flex-col space-y-3">
+      {/* Real-Time Live Sessions Table (Shadcn Table style) */}
+      <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div>
             <h2 className="text-base font-semibold text-slate-900 tracking-tight">
-              Log Sesi &amp; Real-Time Stream
+              Tabel Sesi Photobooth Real-Time
             </h2>
-            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono text-[11px] font-semibold border border-slate-200">
-              Live Socket On
-            </span>
+            <p className="text-xs text-slate-500">
+              Menampilkan {filteredSessions.length} sesi terbaru yang berhasil diproses oleh sistem.
+            </p>
           </div>
 
-          {/* Table Filters & Search */}
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-xs">
-              <span className="material-symbols-outlined text-slate-400 text-[16px] mr-2">search</span>
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
+                type="text"
+                placeholder="Cari ID, event, template..."
                 value={searchSession}
                 onChange={(e) => setSearchSession(e.target.value)}
-                className="bg-transparent text-slate-900 placeholder:text-slate-400 text-xs focus:outline-none w-44"
-                placeholder="Cari Sesi, Event..."
-                type="text"
+                className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 w-52 sm:w-60 shadow-2xs"
               />
             </div>
+
+            {/* Event Filter */}
             <select
               value={selectedEventFilter}
               onChange={(e) => setSelectedEventFilter(e.target.value)}
-              className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 text-xs border border-slate-200 shadow-xs focus:outline-none cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-700 focus:outline-none focus:border-indigo-600 shadow-2xs"
             >
               <option value="all">Semua Event</option>
-              <option value="Kevin">Wedding Kevin &amp; Astrid</option>
-              <option value="Tech Summit">Tech Summit 2026</option>
+              <option value="Wedding Kevin">Wedding Kevin &amp; Astrid</option>
+              <option value="Tech Summit">Tech Summit Afterparty</option>
             </select>
-            <button
-              onClick={() => {
-                setSelectedEventFilter('all');
-                setSearchSession('');
-                showToast('Filter sesi direset.');
-              }}
-              className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium border border-slate-200 shadow-xs flex items-center gap-1 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[15px]">tune</span>
-              <span>Reset</span>
-            </button>
-            <button
+
+            {/* Export CSV Button */}
+            <Button
+              variant="outline"
+              size="sm"
               onClick={handleExportCsv}
-              className="px-2.5 py-1.5 rounded-lg bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium border border-slate-200 shadow-xs flex items-center gap-1 cursor-pointer"
+              className="h-8 text-xs shadow-2xs"
             >
-              <span className="material-symbols-outlined text-[15px]">file_download</span>
+              <FileSpreadsheet className="w-3.5 h-3.5 mr-1 text-slate-500" />
               <span>Ekspor CSV</span>
-            </button>
+            </Button>
           </div>
         </div>
 
-        {/* The Data Table */}
-        <div className="rounded-xl bg-white border border-slate-200/90 shadow-xs overflow-hidden">
+        {/* Shadcn Styled Table */}
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 text-slate-500 text-[11px] font-semibold uppercase tracking-wider border-b border-slate-200">
-                  <th className="py-2.5 px-4">ID Sesi</th>
-                  <th className="py-2.5 px-4">Waktu</th>
-                  <th className="py-2.5 px-4">Event Studio</th>
-                  <th className="py-2.5 px-4">Mode Terminal</th>
-                  <th className="py-2.5 px-4">Template</th>
-                  <th className="py-2.5 px-4">Captures</th>
-                  <th className="py-2.5 px-4">Output &amp; Delivery</th>
-                  <th className="py-2.5 px-4 text-right">Aksi</th>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <tr>
+                  <th className="px-4 py-3">ID Sesi</th>
+                  <th className="px-4 py-3">Waktu</th>
+                  <th className="px-4 py-3">Event &amp; Lokasi</th>
+                  <th className="px-4 py-3">Mode</th>
+                  <th className="px-4 py-3">Template Frame</th>
+                  <th className="px-4 py-3">Status Cetak</th>
+                  <th className="px-4 py-3">Galeri QR</th>
+                  <th className="px-4 py-3 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                {filteredSessions.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4 font-mono font-semibold text-slate-900">
-                      {row.id}
-                    </td>
-                    <td className="py-3 px-4 font-mono text-slate-500">
-                      {row.time}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-medium text-slate-900 block">{row.event}</span>
-                      <span className="text-[11px] text-slate-500">{row.location}</span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {row.modeType === 'onsite' ? (
-                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200 text-[11px] font-medium inline-flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          {row.mode}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-[11px] font-medium inline-flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                          {row.mode}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="font-medium text-slate-900">{row.template}</span>
-                      <span className="text-[11px] text-slate-500 block">{row.templateDetail}</span>
-                    </td>
-                    <td className="py-3 px-4 font-mono">{row.captures}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[13px] text-slate-500">
-                            {row.printed.includes('Cloud') ? 'cloud_done' : 'print'}
-                          </span>
-                          {row.printed}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[13px] text-slate-500">
-                            {row.delivery.includes('Saved') ? 'download' : 'qr_code'}
-                          </span>
-                          {row.delivery}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link
-                          to="/gallery"
-                          className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                          title="Lihat Hasil Foto"
-                        >
-                          <span className="material-symbols-outlined text-[17px]">photo_library</span>
-                        </Link>
-                        <Link
-                          to="/results/RESULT-LUMINA-DEMO-001"
-                          className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                          title="Salin QR Link"
-                        >
-                          <span className="material-symbols-outlined text-[17px]">link</span>
-                        </Link>
-                        <button
-                          onClick={() => handleReprintSession(row.id)}
-                          className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                          title="Cetak Ulang"
-                        >
-                          <span className="material-symbols-outlined text-[17px]">print</span>
-                        </button>
-                      </div>
+              <tbody className="divide-y divide-slate-100">
+                {filteredSessions.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                      Tidak ada sesi yang cocok dengan kriteria pencarian.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredSessions.map((session) => (
+                    <tr key={session.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-4 py-3 font-mono font-bold text-slate-900">
+                        {session.id}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 font-mono">
+                        {session.time}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-slate-800">{session.event}</div>
+                        <div className="text-[11px] text-slate-400">{session.location}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="secondary"
+                          className={
+                            session.modeType === 'onsite'
+                              ? 'bg-slate-100 text-slate-700'
+                              : 'bg-blue-50 text-blue-700 border-blue-200'
+                          }
+                        >
+                          {session.mode}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-800">{session.template}</div>
+                        <div className="text-[11px] text-slate-400 font-mono">{session.templateDetail}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={
+                            session.printed.includes('Printed')
+                              ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                              : 'text-slate-600 bg-slate-50 border-slate-200'
+                          }
+                        >
+                          {session.printed}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={
+                            session.delivery.includes('Scan')
+                              ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                              : 'text-slate-500 bg-slate-50 border-slate-200'
+                          }
+                        >
+                          {session.delivery}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleReprintSession(session.id)}
+                            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                            title="Cetak Ulang DNP"
+                          >
+                            <RotateCw className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleCopyQr(session.id.replace('#', ''))}
+                            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                            title="Salin QR Tamu"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                          </button>
+                          <Link
+                            to="/admin/gallery"
+                            className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
+                            title="Buka di Galeri"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
-          {/* Table Pagination Bar */}
-          <div className="px-4 py-3 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 border-t border-slate-200">
-            <div className="flex items-center gap-2">
-              <span>Menampilkan 1-4 dari 1,428 Sesi</span>
-              <span className="text-slate-300">•</span>
-              <span className="font-mono">WebSocket: 24ms</span>
-            </div>
+          {/* Table Footer */}
+          <div className="px-4 py-3 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Menampilkan {filteredSessions.length} dari 1,428 total sesi</span>
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-2.5 py-1 rounded bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs disabled:opacity-50 cursor-pointer"
-              >
+              <Button variant="outline" size="sm" className="h-7 text-xs px-2" disabled>
                 Sebelumnya
-              </button>
-              <span className="px-2 py-1 font-mono text-slate-900 font-semibold">{currentPage}</span>
-              <button
-                onClick={() => setCurrentPage(2)}
-                className={`px-2 py-1 rounded cursor-pointer ${currentPage === 2 ? 'font-bold text-slate-900 bg-slate-200' : 'hover:bg-slate-200/60'}`}
-              >
-                2
-              </button>
-              <button
-                onClick={() => setCurrentPage(3)}
-                className={`px-2 py-1 rounded cursor-pointer ${currentPage === 3 ? 'font-bold text-slate-900 bg-slate-200' : 'hover:bg-slate-200/60'}`}
-              >
-                3
-              </button>
-              <span className="px-1 text-slate-400">...</span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(3, p + 1))}
-                disabled={currentPage === 3}
-                className="px-2.5 py-1 rounded bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 shadow-xs disabled:opacity-50 cursor-pointer"
-              >
+              </Button>
+              <Button variant="outline" size="sm" className="h-7 text-xs px-2">
                 Selanjutnya
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Operational Tenant Bottom Quick Status & Hardware Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Hardware Status 1 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
-          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 flex-shrink-0">
-            <span className="material-symbols-outlined text-[20px]">print_connect</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-slate-900 truncate">
-                DNP DS620 Fleet Status
-              </h4>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">3 Printer Siap • 0 Antrean Error</p>
-            <div className="mt-1">
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200">
-                Thermal Head: Optimal (32°C)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hardware Status 2 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
-          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 flex-shrink-0">
-            <span className="material-symbols-outlined text-[20px]">camera</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-slate-900 truncate">
-                Canon EDSDK Connection
-              </h4>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">2 EOS R100 • 1 EOS 200D II</p>
-            <div className="mt-1">
-              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200">
-                LiveView: 60 FPS Stable
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hardware Status 3 */}
-        <div className="p-4 rounded-xl bg-white border border-slate-200/90 shadow-xs flex items-center gap-3.5 hover:border-slate-300 transition-all">
-          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700 flex-shrink-0">
-            <span className="material-symbols-outlined text-[20px]">verified</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-slate-900 truncate">
-                Paket Pro Studio Tenant
-              </h4>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">Aktif s/d 14 November 2026</p>
-            <div className="mt-1">
-              <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-medium">
-                Batas Event: Unlimited Booth
-              </span>
+              </Button>
             </div>
           </div>
         </div>

@@ -5,6 +5,8 @@
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Smooth anchor navigation — UX guideline: anchor links scroll smoothly */
+    scroll-behavior: smooth;
   }
   body {
     overscroll-behavior: none;
@@ -16,6 +18,12 @@
   }
   main > :last-child {
     margin-bottom: 0 !important;
+  }
+  /* Global focus ring: amber brand color, offset from element edge */
+  :focus-visible {
+    outline: 2px solid #f59e0b;
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 }
 
@@ -47,16 +55,20 @@
   background: #777587;
 }
 
-/* Landing Page Soft Grid & Mesh Glow */
-.bg-grid-soft {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-.hero-mesh-glow {
-  background: radial-gradient(circle at 50% 15%, rgba(99, 102, 241, 0.15) 0%, rgba(244, 63, 94, 0.06) 40%, rgba(248, 250, 252, 0) 70%);
+/* Reduced motion: skip decorative animations */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none !important;
+  }
 }
 
 @keyframes flashFx {
